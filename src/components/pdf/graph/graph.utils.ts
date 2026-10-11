@@ -79,7 +79,10 @@ export const normalizeData = (
   return data as GraphSeries[];
 };
 
-/** Compute nice Y-axis ticks for a given value range. */
+/**
+ * Y-axis ticks on round steps (1, 2, 2.5 or 5 times a power of ten), starting at zero or the
+ * minimum. Round ticks read as a scale; uneven ones (191.3, 382.5) look like data points.
+ */
 export const computeYTicks = (
   min: number,
   max: number,
@@ -88,11 +91,13 @@ export const computeYTicks = (
   if (min === max) {
     return [0, max || 1];
   }
-  const step = (max - min) / (count - 1);
-  return Array.from({ length: count }, (_, i) => {
-    const v = min + i * step;
-    return Math.round(v * 100) / 100;
-  });
+  const raw = (max - min) / Math.max(1, count - 1);
+  const mag = 10 ** Math.floor(Math.log10(raw));
+  const step = ([1, 2, 2.5, 5, 10].find((m) => m * mag >= raw) ?? 10) * mag;
+  const start = Math.floor(min / step) * step;
+  const ticks: number[] = [];
+  for (let v = start; v < max + step * 0.999; v += step) ticks.push(Math.round(v * 1e6) / 1e6);
+  return ticks;
 };
 
 /** Format a number for display on axis labels. */
@@ -207,7 +212,9 @@ export const buildLayout = (
   const rawMin = Math.min(...allValues, 0);
   const rawMax = Math.max(...allValues, 1);
   const yMin = Math.min(0, rawMin);
-  const yMax = rawMax + (rawMax - yMin) * 0.08;
+  const yTicks = computeYTicks(yMin, rawMax, yTickCount);
+  // The axis ends on the last round tick so bars and gridlines share one scale.
+  const yMax = yTicks[yTicks.length - 1] ?? rawMax;
   return {
     chartH,
     chartW,
@@ -218,6 +225,6 @@ export const buildLayout = (
     xLabels: series[0]?.data.map((d) => d.label) ?? [],
     yMax,
     yMin,
-    yTicks: computeYTicks(yMin, yMax, yTickCount),
+    yTicks,
   };
 };

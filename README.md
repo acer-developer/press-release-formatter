@@ -1,96 +1,96 @@
 # Rating Note Studio
 
-A web portal that turns raw analyst material or an existing rating document into a publication-ready ACER credit rating press release. You edit the note directly on a page that looks like the final output, then export a branded A4 PDF.
+Turns an existing rating document or raw analyst notes into a publication-ready ACER credit rating press release. You edit the note on a page that looks like the output, choose one of three layouts, and export a branded A4 PDF. Every figure and rating is checked against the source, so nothing is published that the source does not say.
 
 **Live site:** https://acer-developer.github.io/ratingnote-generator-/
 
-Everything runs in the browser, so the site is hosted free on GitHub Pages. Documents are never uploaded to a server. The earlier server-based version (Next.js API routes and SQLite) is kept on the `server-version` branch.
+Everything runs in the browser. Documents are not uploaded to any server, notes are saved in your browser, and AI is optional.
 
-## What it does
+## How to use it
 
-- **Two ways in.** Upload one document (PDF, DOCX, TXT, MD, JSON, CSV) or paste text.
-- **Builds the note.** Existing ACER-format documents are parsed faithfully by a rules engine, with no AI involved. Raw notes can be drafted into house-style prose by an AI provider (Claude, or the free tiers of Gemini or Groq).
-- **Edit on the page.** Every heading, paragraph, bullet and table cell is editable in place. You can add, move and delete sections and blocks. Undo and redo are supported (Ctrl+Z / Ctrl+Shift+Z).
-- **Three templates.** The same content can be laid out as **A Boardroom** (cover banner, executive summary, strengths against weaknesses), **B Scorecard** (key-facts sidebar, driver scorecard, rating triggers) or **C Report** (pdfcn report cards, badges, highlights and risks). Print view shows a live first page of each so people can compare and switch; switching makes no extra AI calls.
-- **Print view.** Shows the exact PDF in the chosen template, page by page.
-- **Clean page breaks.** Headings and subheadings stay with the text they introduce, short blocks are never split, and table header rows repeat on every page.
-- **Options.** Charts are off unless switched on. The date can be printed ("Add date", with a picker that formats dates like "24th August 2026") or omitted ("No date").
-- **Versions.** Each save creates a new version in the browser (IndexedDB), with the source text attached so checks keep working. Saved notes stay on the computer where they were saved.
-- **AI keys.** Added under Settings, stored only in your browser, and sent only to the provider you choose. Gemini falls back to sibling flash models when one is overloaded.
+1. **Source.** Drop one file (PDF, DOCX, TXT, MD, JSON or CSV) or paste text.
+2. **Generate.** Existing ACER-format notes are rebuilt by the rules engine, with no AI. Raw notes can be drafted into house-style prose by AI if you add a key under **Settings**.
+3. **Review.** The Review panel lists anything the checker could not trace to the source. Click an item to jump to it.
+4. **Edit on page.** Click any heading, paragraph, bullet or table cell to edit it. Add, move or delete sections and blocks. Undo and redo with Ctrl+Z and Ctrl+Shift+Z.
+5. **Print view.** See the exact PDF and compare the three templates side by side. Switching templates is instant and costs nothing.
+6. **Export PDF** or **Save** a version (kept in this browser).
 
-## Accuracy safeguards
+Options: **Charts** are off unless switched on. **Date** can be printed (with a picker that formats it as "24th August 2026") or left off.
 
-The generator never invents facts. These checks run live in the Review panel while you edit:
+## Templates
 
-| Check | What it catches |
-| --- | --- |
-| Traceability | Any number or ACER rating symbol in the note that does not appear in the source document |
-| Arithmetic | Instrument totals that do not add up, and margin rows that do not match their own revenue and profit rows |
-| Consistency | A headline rating that differs from the rating in the instruments table |
-| Completeness | Missing standard sections, company name, headline or date |
-| House style | Em/en dashes and stock AI phrasing ("notably", "robust", "it is worth noting" and similar) |
+| | Template | Character |
+| --- | --- | --- |
+| A | Boardroom | Dark green cover banner with the rating facts, a three-point executive summary, strengths set against weaknesses, headline financials with year-on-year change |
+| B | Scorecard | Key-facts sidebar with a strength/weakness balance bar, a driver scorecard table, upgrade and downgrade triggers |
+| C | Report | Built on pdfcn's report style: rounded cards, change badges, highlights and risks |
 
-Ratings and outlooks are never changed automatically. AI output also passes through a dash cleaner before it reaches the editor.
+All three carry the full note after the briefing pages: every section, table and annexure, in ACER's palette (black text, green-teal accents) and typefaces (Caladea headings, Satoshi body). Headings stay with their text and table headers repeat on every page.
 
-## How it is built
+## No hallucination: how it is enforced
+
+- The rules engine only rearranges source text. AI drafts are treated as untrusted.
+- Every figure, year, count and ACER rating symbol in the note must appear in the source. Names the source never mentions and sentences with little support in the source are flagged.
+- For AI drafts, figures the source contains but the note dropped are listed.
+- Totals and margins are recalculated from the table's own rows; mismatches are flagged.
+- The templates add nothing but layout. The only new numbers are year-on-year changes calculated from the note's own figures, labelled as computed. An end-to-end test renders all three templates and fails if any figure in the PDF is not in the source, or if any paragraph is missing.
+- Ratings are never changed automatically. Em dashes and stock AI phrasing are removed or flagged.
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full design, the module map and the premortem (risks, mitigations and the tests that cover them).
+
+## Architecture at a glance
 
 ```
-upload / text
-   │
-   ▼
-extract            PDF: unpdf (pdf.js) text positions + drawn table borders
-                   DOCX: mammoth → HTML   ·   TXT/MD/JSON: line parser
-   │
-   ▼
-segment            lines, bold lead-ins, bullets, bordered and borderless tables
-   │
-   ├── rules parser (no AI)   ──┐
-   └── AI provider (optional) ──┤   strict JSON schema, facts only from the source
-                                ▼
-RatingNote (one JSON model)  ──►  verifier (traceability, arithmetic, style)
-   │
-   ├── on-page editor (React, Tailwind)
-   └── PDF renderer (pdfcn components on the Forme WASM engine)
+source file / text
+  → extract (pdf.js layout and table borders, mammoth for DOCX, text parser)
+  → segment (lines, bold lead-ins, bullets, bordered and borderless tables)
+  → build the note (rules engine, or optional AI with a strict facts-only schema)
+  → clean (house style) → verify (traceability, grounding, arithmetic, completeness)
+  → edit on page ⇄ RatingNote (one JSON model) ⇄ saved versions (IndexedDB)
+  → template A / B / C → PDF (pdfcn components on the Forme WASM engine)
 ```
 
-- **Framework:** Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS 4
-- **PDF:** [pdfcn](https://www.pdfcn.dev) components (table, graph, theme provider) on [Forme](https://docs.formepdf.com), with a custom ACER theme. Fonts are Caladea for headings and Satoshi for body text, matching acerratings.com.
-- **Brand palette:** black text, with ACER green-teal (#22493E, #326D5E, #43927D, #54B69C, #8EC641) used only for accents, rules and table headers
-- **Runs in the browser:** pdf.js reads PDFs, mammoth reads DOCX, and the Forme engine renders PDFs as WebAssembly. The site is a static Next.js export.
-- **Storage:** IndexedDB in the browser
-- **AI:** provider-independent interface in `src/lib/ai`, called directly from the browser with the user's own key. Gemini receives a JSON Schema for structured output, Claude uses the Anthropic SDK with structured outputs, Groq uses JSON mode. The app works fully without any key.
-
-Key files:
-
-| Path | Purpose |
+| Area | Technology |
 | --- | --- |
-| `src/lib/extract/pdf-layout.ts` | PDF text, fonts (bold/italic) and table borders |
-| `src/lib/extract/segment.ts` | Converts layouts and text into document items, reconstructs tables |
-| `src/lib/parse/heuristic.ts` | Rules engine mapping items to the press-release structure |
-| `src/lib/ai/` | Prompt and providers |
-| `src/lib/verify/verify.ts` | Anti-hallucination and consistency checks |
-| `src/lib/note/style.ts` | Dash cleaning and phrase checks |
-| `src/lib/pdf/templates/shared.tsx` | Briefing extraction, tables, charts, full-note body with page-break rules |
-| `src/lib/pdf/templates/templates.tsx` | Templates A Boardroom, B Scorecard, C Report |
-| `src/lib/pdf/render.tsx` | Browser rendering with the Forme WASM engine |
-| `src/lib/store.ts` | Saved notes and versions (IndexedDB) |
-| `src/components/studio/` | Portal UI: studio shell, on-page editor, table editor, print view, library, settings |
+| App | Next.js 15 static export, React 19, TypeScript, Tailwind CSS 4 |
+| PDF output | [pdfcn](https://www.pdfcn.dev) components on [Forme](https://docs.formepdf.com) (WebAssembly, in the browser) |
+| Reading files | pdf.js (PDF text and table borders), mammoth (DOCX) |
+| Storage | IndexedDB (notes and versions), localStorage (AI settings) |
+| AI (optional) | Gemini, Groq or Claude, called from the browser with the user's own key |
+| Hosting | GitHub Pages, deployed by GitHub Actions on every push to `main` |
 
-## Running locally
+## AI keys
+
+AI is only needed to draft prose from raw notes. Open **Settings** and paste a key:
+
+- Google Gemini (free tier): https://aistudio.google.com/apikey. The default model is `gemini-flash-latest`, with automatic fallback to other flash models when it is busy.
+- Groq (free tier): https://console.groq.com/keys
+- Claude: https://console.anthropic.com/settings/keys
+
+Keys are stored only in that browser and sent only to the provider. Never put a key in the code; the site is public.
+
+## Development
 
 ```bash
-npm install
+npm install        # also copies the pdf.js worker and Forme WASM into public/
 npm run dev        # http://localhost:3000
-npm test           # unit tests
-npm run build && npm start
+npm test           # unit, hallucination and end-to-end tests
+npm run build      # static site in out/
 ```
 
-AI keys are entered in the app under Settings; no environment variables are needed.
+Scripts (run with `npx tsx --tsconfig scripts/tsconfig.json <script>`):
 
-`samples/` contains the Viviana Power Tech press release rebuilt by the rules engine in each of the three templates (charts on).
+| Script | Purpose |
+| --- | --- |
+| `scripts/render-node.tsx in.pdf out.pdf [note.json]` | Render a document or note JSON to PDF from Node |
+| `scripts/audit.tsx a.pdf b.pdf ...` | Run the no-AI pipeline and print every checker finding |
+| `scripts/audit-ai.tsx <file or -textfile> [mode]` | Same with a Gemini draft (key in `GEMINI_KEY`) |
+| `scripts/preview-styles.tsx note.json outDir` | Render the template design exploration pages |
 
-Dev scripts: `scripts/render-node.tsx` renders a document or note JSON to PDF from Node, and `scripts/preview-styles.tsx` renders the design exploration pages.
+`samples/` holds the Viviana Power Tech press release rebuilt in each template. `tests/fixtures/` holds three published ACER press releases and a DOCX test note.
+
+The earlier server-based version (API routes and SQLite) is on the `server-version` branch.
 
 ## Deployment
 
-Every push to `main` builds the static site and publishes it to GitHub Pages (`.github/workflows/pages.yml`). To host it elsewhere, run `npx next build` and serve the `out/` folder from any static host. Set `NEXT_PUBLIC_BASE_PATH` when serving from a sub-path.
+Every push to `main` runs the tests, builds the static site and publishes it to GitHub Pages (`.github/workflows/pages.yml`). Repository Settings → Pages → Source must be set to **GitHub Actions**. To host elsewhere, serve the `out/` folder from any static host and set `NEXT_PUBLIC_BASE_PATH` if it is served from a sub-path.

@@ -185,7 +185,9 @@ export function parseHeuristic(items: DocItem[]): RatingNote {
       }
       if (rule?.kind === "skip") continue;
       const table = toTable(it.rows);
-      if (rule?.kind === "instruments" && !note.instruments) {
+      // A rating table straight under the title block is the instruments table, heading or not.
+      const leadingRatingTable = !section && !note.instruments && table.columns.some((c) => /rating/i.test(c)) && table.columns.some((c) => /amount|size|limit|crore/i.test(c));
+      if ((rule?.kind === "instruments" || leadingRatingTable) && !note.instruments) {
         note.instruments = { ...table, title: "Details of instruments" };
         continue;
       }

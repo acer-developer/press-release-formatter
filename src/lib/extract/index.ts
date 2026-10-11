@@ -49,8 +49,12 @@ function jsonToLines(value: unknown, prefix = ""): string {
 }
 
 async function extractDocx(data: Uint8Array): Promise<ExtractedDocument> {
-  const buffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
-  const { value: html } = await mammoth.convertToHtml({ arrayBuffer: buffer });
+  // mammoth's browser build takes an ArrayBuffer; its Node build (tests, scripts) takes a Buffer.
+  const input =
+    typeof window === "undefined" && typeof Buffer !== "undefined"
+      ? { buffer: Buffer.from(data) }
+      : { arrayBuffer: data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer };
+  const { value: html } = await mammoth.convertToHtml(input as Parameters<typeof mammoth.convertToHtml>[0]);
   const root = parseHtml(html);
   const items: DocItem[] = [];
   const textParts: string[] = [];

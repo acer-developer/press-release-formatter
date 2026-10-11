@@ -77,6 +77,25 @@ const mapBlock = (b: NoteBlock, f: (s: string) => string): NoteBlock => {
   }
 };
 
+/** Applies a text transform to every string the note prints. */
+export function mapNoteText(note: RatingNote, f: (s: string) => string): RatingNote {
+  return {
+    ...note,
+    meta: { documentType: f(note.meta.documentType), date: f(note.meta.date), companyName: f(note.meta.companyName), headline: f(note.meta.headline) },
+    instruments: note.instruments ? mapTable(note.instruments, f) : null,
+    sections: note.sections.map((s) => ({ ...s, title: f(s.title), blocks: s.blocks.map((b) => mapBlock(b, f)) })),
+    contacts: note.contacts.map((c) => ({ role: f(c.role), name: f(c.name), phone: f(c.phone), email: f(c.email) })),
+    disclaimer: f(note.disclaimer),
+  };
+}
+
+/**
+ * Print-time substitutions for characters the brand fonts do not contain. "₹" becomes "INR",
+ * ACER's own convention, so no figure changes and nothing prints as an empty box.
+ */
+export const printSafe = (note: RatingNote) =>
+  mapNoteText(note, (s) => s.replace(/₹\s*/g, "INR ").replace(/[\u25CF\u25AA]/g, "\u2022"));
+
 export function cleanNote(note: RatingNote): RatingNote {
   return {
     ...note,

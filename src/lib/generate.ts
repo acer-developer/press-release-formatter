@@ -105,5 +105,5 @@ export async function generateNote(input: GenerateInput): Promise<GenerationResu
   }
 
   note = cleanNote(note);
-  return { note, issues: [...extra, ...verifyNote(note, doc.text)], engine, sourceText: doc.text };
+  return { note, issues: [...extra, ...verifyNote(note, doc.text, { coverage: engine !== "rules" })], engine, sourceText: doc.text };
 }

@@ -143,7 +143,7 @@ export function Studio() {
 
   // Live verification against the source document as the analyst edits.
   const deferredNote = useDeferredValue(note);
-  const liveIssues = useMemo(() => verifyNote(deferredNote, sourceText), [deferredNote, sourceText]);
+  const liveIssues = useMemo(() => verifyNote(deferredNote, sourceText, { coverage: !!engineUsed && engineUsed !== "rules" && engineUsed !== "sample" }), [deferredNote, sourceText, engineUsed]);
   const issues = useMemo(() => {
     const advisory = serverIssues.filter((i) => i.code === "open-question" || i.code === "no-ai");
     return [...advisory, ...liveIssues];
