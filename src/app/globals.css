@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@font-face { font-family: "Satoshi"; src: url("/fonts/Satoshi-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Satoshi"; src: url("/fonts/Satoshi-Medium.ttf") format("truetype"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Satoshi"; src: url("/fonts/Satoshi-Bold.ttf") format("truetype"); font-weight: 600 700; font-display: swap; }
+@font-face { font-family: "Caladea"; src: url("/fonts/Caladea-400.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Caladea"; src: url("/fonts/Caladea-700.ttf") format("truetype"); font-weight: 700; font-display: swap; }
+
+
+@theme {
+  --font-sans: "Satoshi", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Caladea", Georgia, serif;
+  --color-ink: #1b1b18;
+  --color-heading: #111111;
+  --color-muted: #5f6368;
+  --color-hairline: #daddd8;
+  --color-mist: #f4f7f5;
+  --color-tint: #eef8f5;
+  --color-deep: #22493e;
+  --color-primary: #326d5e;
+  --color-accent: #43927d;
+  --color-light: #54b69c;
+  --color-lime: #8ec641;
+  --color-amber: #9a6a16;
+}
+
+html, body { height: 100%; }
+body {
+  background: #eceeea;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.brand-gradient { background: linear-gradient(90deg, #8ec641 0%, #54b69c 60%, #43927d 100%); }
+.paper { box-shadow: 0 1px 2px rgba(17, 24, 20, 0.06), 0 12px 40px -12px rgba(17, 24, 20, 0.18); }
+
+/* Inline editing: fields look like print until hovered or focused. */
+.edit-field { border-radius: 3px; outline: none; transition: background-color 120ms, box-shadow 120ms; resize: none; background: transparent; width: 100%; }
+.edit-field:hover { background: rgba(67, 146, 125, 0.07); }
+.edit-field:focus { background: rgba(67, 146, 125, 0.09); box-shadow: 0 0 0 1px rgba(67, 146, 125, 0.55); }
+.edit-field::placeholder { color: #a3a8a2; font-style: italic; }
+
+.block-toolbar { opacity: 0; transition: opacity 120ms; }
+.block:hover > .block-toolbar, .block:focus-within > .block-toolbar { opacity: 1; }
+
+.scroll-thin::-webkit-scrollbar { width: 8px; height: 8px; }
+.scroll-thin::-webkit-scrollbar-thumb { background: #cfd4cd; border-radius: 8px; }
