@@ -74,6 +74,17 @@ describe("key facts and dates", () => {
   });
 });
 
+describe("rules parser tables", () => {
+  it("moves footnotes typed inside a table border below the table", () => {
+    const note = parseHeuristic([
+      { kind: "line", text: "Rating Action", bold: true, italic: false, size: 11, boldLead: "", bullet: false, gap: 20, indent: 0 },
+      { kind: "table", rows: [["Instrument", "Amount", "Rating"], ["NCD", "55.00", "ACER BBB-"], ["#Please refer to Annexure V for regulators.", "", ""]] },
+    ]);
+    expect(note.instruments?.rows).toHaveLength(1);
+    expect(note.instruments?.footnotes).toEqual(["#Please refer to Annexure V for regulators."]);
+  });
+});
+
 describe("rules parser on raw text", () => {
   it("builds sections, drivers, bullets and tables from markdown-ish notes", () => {
     const text = [

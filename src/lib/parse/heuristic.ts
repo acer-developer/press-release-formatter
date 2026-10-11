@@ -68,8 +68,13 @@ function toTable(rows: string[][]): NoteTable {
       body = [body[0].map((c, i) => [c, body[1][i]].filter(Boolean).join(" ")), ...body.slice(2)];
     }
   }
-  const [columns, ...rest] = body;
+  const [columns, ...allRows] = body;
   const width = columns.length;
+  // Footnotes typed inside the table border ("#Please refer to Annexure V...") are rows with a
+  // single filled cell starting with a footnote marker; they belong under the table instead.
+  const isFootnoteRow = (r: string[]) => r.filter(Boolean).length === 1 && /^[*#^~@+]/.test(r.find(Boolean) ?? "");
+  const footnotes = allRows.filter(isFootnoteRow).map((r) => r.find(Boolean)!);
+  const rest = allRows.filter((r) => !isFootnoteRow(r));
   const norm = (r: string[]) => (r.length >= width ? r.slice(0, width) : [...r, ...Array(width - r.length).fill("")]);
   const totalIdx = rest.findIndex((r) => /^total\b/i.test(r[0] ?? ""));
   const totalRow = totalIdx >= 0 && totalIdx === rest.length - 1 ? norm(rest[totalIdx]) : undefined;
@@ -79,7 +84,7 @@ function toTable(rows: string[][]): NoteTable {
     rows: (totalRow ? rest.slice(0, -1) : rest).map(norm),
     totalRow,
     source: "",
-    footnotes: [],
+    footnotes,
   };
 }
 
