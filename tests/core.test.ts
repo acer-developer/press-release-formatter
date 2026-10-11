@@ -30,6 +30,12 @@ describe("traceability", () => {
     note.instruments = null;
     expect(checkTraceability(note, source).filter((i) => i.blockId === "p")).toHaveLength(0);
   });
+  it("matches figures with unit suffixes", () => {
+    const note = clone(northwindSample);
+    note.instruments = null;
+    note.sections = [{ id: "s", title: "T", blocks: [{ id: "p", type: "paragraph", text: "Gearing was 1.4 times and coverage 3.2x." }] }];
+    expect(checkTraceability(note, "gearing 1.4x, coverage 3.2x in FY26").filter((i) => i.blockId === "p")).toHaveLength(0);
+  });
   it("flags invented numbers and ratings", () => {
     const note = clone(northwindSample);
     note.sections = [{ id: "s", title: "T", blocks: [{ id: "p", type: "paragraph", text: "EBITDA was INR 999.10 crore; rated ACER AA." }] }];

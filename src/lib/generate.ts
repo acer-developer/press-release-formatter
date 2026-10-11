@@ -1,7 +1,8 @@
-import { generateStructured, defaultProvider, type LlmNote, type ProviderId } from "@/lib/ai/providers";
+import { generateStructured, defaultProvider, type AiSettings, type LlmNote, type ProviderId } from "@/lib/ai/providers";
 import { buildUserPrompt, SYSTEM_PROMPT, type SourceMode } from "@/lib/ai/prompt";
 import { extractDocument } from "@/lib/extract";
 import { segmentText } from "@/lib/extract/segment";
+import type { PdfJs } from "@/lib/extract/pdf-layout";
 import { DEFAULT_DISCLAIMER, newId, type GenerationResult, type Issue, type NoteBlock, type NoteTable, type RatingNote } from "@/lib/note/schema";
 import { parseHeuristic } from "@/lib/parse/heuristic";
 import { cleanNote } from "@/lib/note/style";
@@ -16,6 +17,8 @@ export interface GenerateInput {
   engine: EngineChoice;
   mode?: SourceMode;
   instructions?: string;
+  ai: AiSettings;
+  pdfjs: PdfJs;
 }
 
 function fromLlm(llm: LlmNote): RatingNote {
@@ -24,11 +27,12 @@ function fromLlm(llm: LlmNote): RatingNote {
     columns: t.columns,
     rows: t.rows,
     totalRow: t.totalRow.some((c) => c.trim()) ? t.totalRow : undefined,
-    source: t.source,
+    // Models sometimes repeat the label or cite the input generically; neither belongs in print.
+    source: /^(source\s*:\s*)*(the\s+)?source( document| material)?\.?$/i.test(t.source.trim()) ? "" : t.source.replace(/^\s*source\s*:\s*/i, ""),
     footnotes: t.footnotes,
   });
   return {
-    meta: { ...llm.meta, documentType: llm.meta.documentType || "Press Release" },
+    meta: { ...llm.meta, documentType: /release/i.test(llm.meta.documentType) || !llm.meta.documentType ? "Press Release" : llm.meta.documentType },
     instruments: llm.instruments.columns.length ? table(llm.instruments) : null,
     sections: llm.sections
       .map((s) => ({
@@ -68,7 +72,7 @@ function heuristicLooksComplete(note: RatingNote) {
 
 export async function generateNote(input: GenerateInput): Promise<GenerationResult> {
   const doc = input.data
-    ? await extractDocument(input.fileName ?? "upload", input.data)
+    ? await extractDocument(input.fileName ?? "upload", input.data, input.pdfjs)
     : { kind: "text" as const, text: input.text ?? "", items: segmentText(input.text ?? "") };
 
   if ("note" in doc && doc.note) {
@@ -77,7 +81,7 @@ export async function generateNote(input: GenerateInput): Promise<GenerationResu
   if (!doc.text.trim()) throw new Error("The document is empty.");
 
   const ruleNote = parseHeuristic(doc.items);
-  const provider = input.engine === "auto" ? defaultProvider() : input.engine === "rules" ? null : input.engine;
+  const provider = input.engine === "auto" ? defaultProvider(input.ai) : input.engine === "rules" ? null : input.engine;
   const mode: SourceMode = input.mode ?? (doc.kind === "pdf" || heuristicLooksComplete(ruleNote) ? "existing-note" : "raw-notes");
 
   // Existing ACER-format documents parse faithfully without AI; AI is used for raw material
@@ -88,7 +92,7 @@ export async function generateNote(input: GenerateInput): Promise<GenerationResu
   let engine = "rules";
   const extra: Issue[] = [];
   if (useAi && provider) {
-    const { note: llm, model } = await generateStructured(provider, SYSTEM_PROMPT, buildUserPrompt(doc.text, mode, input.instructions ?? ""));
+    const { note: llm, model } = await generateStructured(provider, input.ai, SYSTEM_PROMPT, buildUserPrompt(doc.text, mode, input.instructions ?? ""));
     note = fromLlm(llm);
     engine = `${provider}:${model}`;
     for (const q of llm.openQuestions) extra.push({ severity: "warning", code: "open-question", message: q });
@@ -96,7 +100,7 @@ export async function generateNote(input: GenerateInput): Promise<GenerationResu
     extra.push({
       severity: "info",
       code: "no-ai",
-      message: "No AI provider is configured, so the note was built by the rules engine. Add ANTHROPIC_API_KEY, GEMINI_API_KEY or GROQ_API_KEY to draft prose from raw notes.",
+      message: "No AI key is set, so the note was built by the rules engine. Add a free Gemini or Groq key in Settings to draft prose from raw notes.",
     });
   }
 

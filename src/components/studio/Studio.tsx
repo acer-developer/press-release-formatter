@@ -1,5 +1,6 @@
 "use client";
 
+import { asset } from "@/lib/asset";
 import {
   AlertTriangle,
   BarChart3,
@@ -9,6 +10,7 @@ import {
   FileText,
   FileUp,
   FolderOpen,
+  KeyRound,
   Info,
   Loader2,
   Printer,
@@ -22,22 +24,21 @@ import {
 } from "lucide-react";
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 
+import { isAvailable, PROVIDERS, type AiSettings } from "@/lib/ai/providers";
+import type { EngineChoice } from "@/lib/generate";
 import { produce } from "@/lib/note/ops";
+import { loadPdfJs } from "@/lib/pdfjs-client";
+import { loadAiSettings, saveAiSettings } from "@/lib/settings";
+import { saveNote } from "@/lib/store";
 import { northwindSample } from "@/lib/note/samples/northwind";
-import { emptyNote, type GenerationResult, type Issue, type RatingNote } from "@/lib/note/schema";
+import { emptyNote, type Issue, type RatingNote } from "@/lib/note/schema";
 import { verifyNote } from "@/lib/verify/verify";
 
 import { NoteEditor } from "./NoteEditor";
 import { PrintView } from "./PrintView";
 import { Library } from "./Library";
+import { SettingsDialog } from "./SettingsDialog";
 
-interface ProviderInfo {
-  id: string;
-  label: string;
-  model: string;
-  available: boolean;
-  free: boolean;
-}
 
 const ACCEPT = ".pdf,.docx,.txt,.md,.markdown,.json,.csv";
 
@@ -60,7 +61,8 @@ export function Studio() {
   const [engine, setEngine] = useState("auto");
   const [sourceKind, setSourceKind] = useState("");
   const [instructions, setInstructions] = useState("");
-  const [providers, setProviders] = useState<ProviderInfo[]>([]);
+  const [ai, setAi] = useState<AiSettings>({ keys: {}, models: {}, preferred: "" });
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -71,10 +73,7 @@ export function Studio() {
   const [dragOver, setDragOver] = useState(false);
 
   useEffect(() => {
-    fetch("/api/providers")
-      .then((r) => r.json())
-      .then((d) => setProviders(d.providers ?? []))
-      .catch(() => setProviders([]));
+    setAi(loadAiSettings());
   }, []);
 
   useEffect(() => {
@@ -164,23 +163,28 @@ export function Studio() {
 
   async function generate() {
     setError(null);
-    const form = new FormData();
+    let data: Uint8Array | undefined;
     if (inputMode === "document") {
       if (!file) return setError("Choose a document first.");
-      form.set("file", file);
-    } else {
-      if (!rawText.trim()) return setError("Paste or type the source material first.");
-      form.set("text", rawText);
+      if (file.size > 15 * 1024 * 1024) return setError("File is larger than 15 MB.");
+      data = new Uint8Array(await file.arrayBuffer());
+    } else if (!rawText.trim()) {
+      return setError("Paste or type the source material first.");
     }
-    form.set("engine", engine);
-    if (sourceKind) form.set("mode", sourceKind);
-    form.set("instructions", instructions);
     setBusy("Reading the source and building the note");
     try {
-      const res = await fetch("/api/generate", { method: "POST", body: form });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Generation failed");
-      const result = data as GenerationResult;
+      // Heavy engines (PDF/DOCX readers, AI SDK) load on first use to keep the page fast.
+      const { generateNote } = await import("@/lib/generate");
+      const result = await generateNote({
+        fileName: file?.name,
+        data,
+        text: inputMode === "text" ? rawText : undefined,
+        engine: engine as EngineChoice,
+        mode: sourceKind === "existing-note" || sourceKind === "raw-notes" ? sourceKind : undefined,
+        instructions,
+        ai,
+        pdfjs: await loadPdfJs(),
+      });
       // Presentation choices made before generating (charts, date) carry over to the new note.
       replaceNote({ ...result.note, options: { charts: note.options?.charts ?? false, dateMode: note.options?.dateMode ?? "date" } });
       setSourceText(result.sourceText);
@@ -202,17 +206,11 @@ export function Studio() {
   async function save() {
     setBusy("Saving version");
     try {
-      const res = await fetch("/api/notes", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id: noteId, note, sourceText, engine: engineUsed }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Save failed");
-      setNoteId(data.id);
-      setVersion(data.version);
+      const saved = await saveNote({ id: noteId, note, sourceText, engine: engineUsed });
+      setNoteId(saved.id);
+      setVersion(saved.version);
       setDirty(false);
-      setToast(`Saved as version ${data.version}`);
+      setToast(`Saved as version ${saved.version} in this browser`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed");
     } finally {
@@ -224,9 +222,9 @@ export function Studio() {
     if (counts.error > 0 && !confirm(`${counts.error} unresolved error(s) in the review panel. Export anyway as a draft?`)) return;
     setBusy("Rendering PDF");
     try {
-      const res = await fetch("/api/render", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ note, download: true }) });
-      if (!res.ok) throw new Error((await res.json()).error || "Render failed");
-      const blob = await res.blob();
+      const { renderNotePdf } = await import("@/lib/pdf/render");
+      const pdf = await renderNotePdf(note);
+      const blob = new Blob([pdf as BlobPart], { type: "application/pdf" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
       a.download = `${(note.meta.companyName || "rating-note").replace(/[^\w]+/g, "-")}-press-release.pdf`;
@@ -263,7 +261,7 @@ export function Studio() {
       {/* Top bar */}
       <header className="relative z-30 flex h-14 shrink-0 items-center gap-3 border-b border-hairline bg-white px-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/acer-logo.png" alt="ACER" className="h-7 w-auto" />
+        <img src={asset("/acer-logo.png")} alt="ACER" className="h-7 w-auto" />
         <div className="h-6 w-px bg-hairline" />
         <div className="min-w-0">
           <div className="text-[13px] font-bold text-heading">Rating Note Studio</div>
@@ -289,6 +287,9 @@ export function Studio() {
           >
             <BarChart3 size={14} /> Charts {charts ? "on" : "off"}
           </button>
+          <ToolbarButton title="AI keys and models" onClick={() => setSettingsOpen(true)} label="Settings">
+            <KeyRound size={15} />
+          </ToolbarButton>
           <ToolbarButton title="Open saved notes" onClick={() => setLibraryOpen(true)} label="Library">
             <FolderOpen size={15} />
           </ToolbarButton>
@@ -399,10 +400,10 @@ export function Studio() {
                     <select value={engine} onChange={(e) => setEngine(e.target.value)} className="h-9 w-full rounded-md border border-hairline bg-white px-2 text-[12.5px] outline-none focus:border-accent">
                       <option value="auto">Automatic</option>
                       <option value="rules">No AI (rules only)</option>
-                      {providers.map((p) => (
-                        <option key={p.id} value={p.id} disabled={!p.available}>
+                      {PROVIDERS.map((p) => (
+                        <option key={p.id} value={p.id} disabled={!isAvailable(ai, p.id)}>
                           {p.label}
-                          {p.available ? "" : " (not set up)"}
+                          {isAvailable(ai, p.id) ? "" : " (add key in Settings)"}
                         </option>
                       ))}
                     </select>
@@ -497,7 +498,7 @@ export function Studio() {
                 </div>
 
                 <p className="text-[11px] leading-relaxed text-muted">
-                  The generator only re-uses facts from your source. Every figure and rating in the note is checked against it, and anything it cannot find is flagged in Review. Ratings are never changed automatically.
+                  Everything runs in your browser. Documents are not uploaded to any server; only if you choose an AI engine is the extracted text sent to that provider. The generator only re-uses facts from your source. Every figure and rating in the note is checked against it, and anything it cannot find is flagged in Review. Ratings are never changed automatically.
                 </p>
               </div>
             ) : (
@@ -542,6 +543,19 @@ export function Studio() {
         <div className="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full bg-deep px-4 py-2 text-[12px] font-medium text-white shadow-lg">
           <CheckCircle2 size={14} /> {toast}
         </div>
+      ) : null}
+
+      {settingsOpen ? (
+        <SettingsDialog
+          value={ai}
+          onClose={() => setSettingsOpen(false)}
+          onSave={(next) => {
+            setAi(next);
+            saveAiSettings(next);
+            setSettingsOpen(false);
+            setToast("Settings saved in this browser");
+          }}
+        />
       ) : null}
 
       {libraryOpen ? (

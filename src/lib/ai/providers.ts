@@ -41,47 +41,43 @@ export const LlmNoteSchema = z.object({
 });
 export type LlmNote = z.infer<typeof LlmNoteSchema>;
 
+/** JSON Schema of the expected output, for providers that accept one (Gemini) or need it in the prompt (Groq). */
+const llmJsonSchema = () => {
+  const schema = z.toJSONSchema(LlmNoteSchema) as Record<string, unknown>;
+  delete schema.$schema;
+  return schema;
+};
+
 export type ProviderId = "anthropic" | "gemini" | "groq";
 
-export interface ProviderInfo {
+export interface ProviderMeta {
   id: ProviderId;
   label: string;
-  model: string;
-  available: boolean;
+  defaultModel: string;
   free: boolean;
+  keyUrl: string;
 }
 
-export function listProviders(): ProviderInfo[] {
-  return [
-    {
-      id: "anthropic",
-      label: "Claude (Anthropic)",
-      model: process.env.ANTHROPIC_MODEL || "claude-opus-5-5",
-      available: !!(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN),
-      free: false,
-    },
-    {
-      id: "gemini",
-      label: "Google Gemini (free tier)",
-      model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
-      available: !!process.env.GEMINI_API_KEY,
-      free: true,
-    },
-    {
-      id: "groq",
-      label: "Groq (free tier)",
-      model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
-      available: !!process.env.GROQ_API_KEY,
-      free: true,
-    },
-  ];
+export const PROVIDERS: ProviderMeta[] = [
+  { id: "gemini", label: "Google Gemini (free tier)", defaultModel: "gemini-flash-latest", free: true, keyUrl: "https://aistudio.google.com/apikey" },
+  { id: "groq", label: "Groq (free tier)", defaultModel: "llama-3.3-70b-versatile", free: true, keyUrl: "https://console.groq.com/keys" },
+  { id: "anthropic", label: "Claude (Anthropic)", defaultModel: "claude-opus-5-5", free: false, keyUrl: "https://console.anthropic.com/settings/keys" },
+];
+
+/** Per-user AI settings. Keys live only in the user's browser and are sent only to the provider. */
+export interface AiSettings {
+  keys: Partial<Record<ProviderId, string>>;
+  models: Partial<Record<ProviderId, string>>;
+  preferred: ProviderId | "";
 }
 
-export function defaultProvider(): ProviderId | null {
-  const pref = process.env.AI_PROVIDER as ProviderId | undefined;
-  const providers = listProviders();
-  if (pref && providers.find((p) => p.id === pref)?.available) return pref;
-  return providers.find((p) => p.available)?.id ?? null;
+export const emptyAiSettings = (): AiSettings => ({ keys: {}, models: {}, preferred: "" });
+
+export const isAvailable = (s: AiSettings, id: ProviderId) => !!s.keys[id]?.trim();
+
+export function defaultProvider(s: AiSettings): ProviderId | null {
+  if (s.preferred && isAvailable(s, s.preferred)) return s.preferred;
+  return PROVIDERS.find((p) => isAvailable(s, p.id))?.id ?? null;
 }
 
 const extractJson = (text: string): unknown => {
@@ -90,6 +86,22 @@ const extractJson = (text: string): unknown => {
   if (start < 0 || end < 0) throw new Error("The AI provider did not return JSON.");
   return JSON.parse(text.slice(start, end + 1));
 };
+
+/** Retries transient failures (rate limits, overload) with short backoff. */
+async function fetchWithRetry(url: string, init: RequestInit, attempts = 3): Promise<Response> {
+  let res: Response | null = null;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      res = await fetch(url, init);
+    } catch {
+      // Overloaded endpoints sometimes drop the connection or omit CORS headers on errors.
+      res = new Response("Network error reaching the AI provider.", { status: 503 });
+    }
+    if (res.status !== 429 && res.status < 500) return res;
+    if (i < attempts - 1) await new Promise((r) => setTimeout(r, 1500 * 2 ** i));
+  }
+  return res!;
+}
 
 /** Lenient validation for providers without schema-constrained decoding. */
 function coerce(raw: unknown): LlmNote {
@@ -135,15 +147,23 @@ function coerce(raw: unknown): LlmNote {
   };
 }
 
-export async function generateStructured(provider: ProviderId, system: string, user: string): Promise<{ note: LlmNote; model: string }> {
-  const info = listProviders().find((p) => p.id === provider)!;
-  if (!info.available) throw new Error(`${info.label} is not configured on the server.`);
+export async function generateStructured(
+  provider: ProviderId,
+  settings: AiSettings,
+  system: string,
+  user: string
+): Promise<{ note: LlmNote; model: string }> {
+  const meta = PROVIDERS.find((p) => p.id === provider)!;
+  const apiKey = settings.keys[provider]?.trim();
+  if (!apiKey) throw new Error(`Add a ${meta.label} key in Settings first.`);
+  const model = settings.models[provider]?.trim() || meta.defaultModel;
 
   if (provider === "anthropic") {
-    const client = new Anthropic();
+    // The key belongs to the person using the page and never leaves their browser except to Anthropic.
+    const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
     // Streaming avoids HTTP timeouts on long notes with many annexure tables.
     const stream = client.messages.stream({
-      model: info.model,
+      model,
       max_tokens: 64000,
       system,
       messages: [{ role: "user", content: user }],
@@ -153,42 +173,50 @@ export async function generateStructured(provider: ProviderId, system: string, u
     if (message.stop_reason === "refusal") throw new Error("The model declined this request.");
     if (message.stop_reason === "max_tokens") throw new Error("The document is too long for a single generation. Split it and try again.");
     const text = message.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("");
-    return { note: coerce(JSON.parse(text)), model: info.model };
+    return { note: coerce(JSON.parse(text)), model };
   }
 
   if (provider === "gemini") {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(info.model)}:generateContent`,
-      {
+    // Free-tier models are often briefly overloaded; fall back to sibling models when the user
+    // has not pinned one.
+    const candidates = settings.models.gemini?.trim() ? [model] : [...new Set([model, "gemini-3.5-flash", "gemini-flash-lite-latest"])];
+    let lastError = "";
+    for (const m of candidates) {
+      const res = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:generateContent`, {
         method: "POST",
-        headers: { "content-type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY! },
+        headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: system }] },
           contents: [{ role: "user", parts: [{ text: user }] }],
-          generationConfig: { responseMimeType: "application/json", temperature: 0 },
+          generationConfig: { responseMimeType: "application/json", responseJsonSchema: llmJsonSchema(), temperature: 0 },
         }),
+      });
+      if (!res.ok) {
+        lastError = `Gemini request failed (${res.status}): ${(await res.text()).slice(0, 300)}`;
+        if (res.status === 429 || res.status >= 500 || res.status === 404) continue;
+        throw new Error(lastError);
       }
-    );
-    if (!res.ok) throw new Error(`Gemini request failed (${res.status}): ${(await res.text()).slice(0, 300)}`);
-    const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
-    const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
-    return { note: coerce(extractJson(text)), model: info.model };
+      const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string; thought?: boolean }[] } }[] };
+      const text = data.candidates?.[0]?.content?.parts?.filter((p) => !p.thought).map((p) => p.text ?? "").join("") ?? "";
+      return { note: coerce(extractJson(text)), model: m };
+    }
+    throw new Error(`${lastError} Try again in a minute.`);
   }
 
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+  const res = await fetchWithRetry("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
-    headers: { "content-type": "application/json", authorization: `Bearer ${process.env.GROQ_API_KEY}` },
+    headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
-      model: info.model,
+      model,
       temperature: 0,
       response_format: { type: "json_object" },
       messages: [
-        { role: "system", content: system },
+        { role: "system", content: `${system}\n\nReturn only JSON that validates against this JSON Schema:\n${JSON.stringify(llmJsonSchema())}` },
         { role: "user", content: user },
       ],
     }),
   });
   if (!res.ok) throw new Error(`Groq request failed (${res.status}): ${(await res.text()).slice(0, 300)}`);
   const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-  return { note: coerce(extractJson(data.choices?.[0]?.message?.content ?? "")), model: info.model };
+  return { note: coerce(extractJson(data.choices?.[0]?.message?.content ?? "")), model };
 }

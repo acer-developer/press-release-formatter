@@ -1,4 +1,18 @@
-import { getDocumentProxy, getResolvedPDFJS } from "unpdf";
+/** The subset of the pdf.js API used here; the browser and Node builds of pdfjs-dist both satisfy it. */
+export interface PdfJs {
+  getDocument: (src: { data: Uint8Array; isEvalSupported?: boolean; useSystemFonts?: boolean }) => { promise: Promise<PdfJsDocument> };
+  OPS: Record<string, number>;
+}
+interface PdfJsDocument {
+  numPages: number;
+  getPage: (n: number) => Promise<PdfJsPage>;
+}
+interface PdfJsPage {
+  getOperatorList: () => Promise<{ fnArray: number[]; argsArray: unknown[] }>;
+  getViewport: (o: { scale: number }) => { width: number; height: number };
+  getTextContent: () => Promise<{ items: unknown[] }>;
+  commonObjs: { get: (id: string) => unknown };
+}
 
 /** A run of text on one line, in PDF points (origin top-left after normalisation). */
 export interface Span {
@@ -57,9 +71,10 @@ interface RawItem {
 
 const CELL_GAP = 9; // pt of horizontal whitespace that separates two table cells
 
-export async function extractPdfLayout(data: Uint8Array): Promise<PdfLayout> {
-  const pdf = await getDocumentProxy(data);
-  const { OPS } = await getResolvedPDFJS();
+export async function extractPdfLayout(data: Uint8Array, pdfjs: PdfJs): Promise<PdfLayout> {
+  // pdf.js may transfer (detach) the buffer it is given, so hand it a copy.
+  const pdf = await pdfjs.getDocument({ data: data.slice(), isEvalSupported: false }).promise;
+  const { OPS } = pdfjs;
   const lines: Line[] = [];
   const rules: Rule[] = [];
   let pageWidth = 595;

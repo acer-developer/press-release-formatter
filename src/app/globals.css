@@ -1,15 +1,10 @@
 @import "tailwindcss";
 
-@font-face { font-family: "Satoshi"; src: url("/fonts/Satoshi-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
-@font-face { font-family: "Satoshi"; src: url("/fonts/Satoshi-Medium.ttf") format("truetype"); font-weight: 500; font-display: swap; }
-@font-face { font-family: "Satoshi"; src: url("/fonts/Satoshi-Bold.ttf") format("truetype"); font-weight: 600 700; font-display: swap; }
-@font-face { font-family: "Caladea"; src: url("/fonts/Caladea-400.ttf") format("truetype"); font-weight: 400; font-display: swap; }
-@font-face { font-family: "Caladea"; src: url("/fonts/Caladea-700.ttf") format("truetype"); font-weight: 700; font-display: swap; }
 
 
 @theme {
-  --font-sans: "Satoshi", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Caladea", Georgia, serif;
+  --font-sans: var(--font-satoshi), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-caladea), Georgia, serif;
   --color-ink: #1b1b18;
   --color-heading: #111111;
   --color-muted: #5f6368;

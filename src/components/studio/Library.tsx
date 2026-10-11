@@ -4,6 +4,7 @@ import { Loader2, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import type { RatingNote } from "@/lib/note/schema";
+import { deleteNote, getNote, listNotes } from "@/lib/store";
 
 interface NoteRow {
   id: string;
@@ -26,34 +27,31 @@ export function Library({ onClose, onOpen }: { onClose: () => void; onOpen: (n: 
   const [error, setError] = useState<string | null>(null);
 
   const load = () =>
-    fetch("/api/notes")
-      .then((r) => r.json())
-      .then((d) => setRows(d.notes ?? []))
-      .catch(() => setError("Could not load saved notes."));
+    listNotes()
+      .then((notes) => setRows(notes))
+      .catch(() => setError("Could not load saved notes from this browser."));
 
   useEffect(() => {
     void load();
   }, []);
 
   const open = async (id: string, version?: number) => {
-    const res = await fetch(`/api/notes/${id}${version ? `?version=${version}` : ""}`);
-    const d = await res.json();
-    if (!res.ok) return setError(d.error || "Could not open note");
-    setVersions((v) => ({ ...v, [id]: d.versions }));
-    onOpen({ id, version: d.current.version, note: d.current.content, sourceText: d.current.sourceText, engine: d.current.engine });
+    const stored = await getNote(id);
+    const v = stored?.versions.find((x) => x.version === version) ?? stored?.versions.at(-1);
+    if (!stored || !v) return setError("Could not open note");
+    onOpen({ id, version: v.version, note: v.note, sourceText: v.sourceText, engine: v.engine });
   };
 
   const showVersions = async (id: string) => {
-    const res = await fetch(`/api/notes/${id}`);
-    const d = await res.json();
-    if (res.ok) setVersions((v) => ({ ...v, [id]: d.versions }));
+    const stored = await getNote(id);
+    if (stored) setVersions((v) => ({ ...v, [id]: [...stored.versions].reverse().map((x) => ({ version: x.version, createdAt: x.createdAt })) }));
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/30 p-10" onClick={onClose}>
       <div className="w-full max-w-2xl rounded-lg bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-hairline px-5 py-3">
-          <div className="font-serif text-[18px] font-bold text-heading">Saved notes</div>
+          <div className="font-serif text-[18px] font-bold text-heading">Saved notes <span className="font-sans text-[11px] font-normal text-muted">(this browser)</span></div>
           <button type="button" onClick={onClose} aria-label="Close" className="rounded p-1 text-muted hover:bg-mist">
             <X size={16} />
           </button>
@@ -65,7 +63,7 @@ export function Library({ onClose, onOpen }: { onClose: () => void; onOpen: (n: 
               <Loader2 size={14} className="animate-spin" /> Loading
             </div>
           ) : rows.length === 0 ? (
-            <div className="p-4 text-[12.5px] text-muted">Nothing saved yet. Use Save in the toolbar to keep a version.</div>
+            <div className="p-4 text-[12.5px] text-muted">Nothing saved in this browser yet. Use Save in the toolbar to keep a version.</div>
           ) : (
             rows.map((r) => (
               <div key={r.id} className="group rounded-md p-3 hover:bg-mist">
@@ -83,7 +81,7 @@ export function Library({ onClose, onOpen }: { onClose: () => void; onOpen: (n: 
                     title="Delete"
                     onClick={async () => {
                       if (!confirm("Delete this note and all its versions?")) return;
-                      await fetch(`/api/notes/${r.id}`, { method: "DELETE" });
+                      await deleteNote(r.id);
                       void load();
                     }}
                     className="text-muted opacity-0 hover:text-red-700 group-hover:opacity-100"

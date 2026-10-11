@@ -9,7 +9,8 @@ import { checkStyle } from "@/lib/note/style";
  *  - completeness: mandatory press-release sections and fields must be present
  */
 
-const NUM_RE = /(?<![\w.])-?\d[\d,]*(?:\.\d+)?(?![\w])/g;
+// Numbers may carry a unit suffix ("1.4x", "12%"), but not other letters ("FY26", "Q1").
+const NUM_RE = /(?<![\w.])-?\d[\d,]*(?:\.\d+)?(?![\dA-WYZa-wyz])/g;
 const RATING_SYMBOL_RE = /\bACER\s+(?:A1\+?|A[1-4]\+?|AAA|AA[+-]?|A[+-]?|BBB[+-]?|BB[+-]?|B[+-]?|C|D)(?![+\w-])/g;
 
 /** Canonical form for numbers: strip grouping, trailing zeros ("12.50" == "12.5"). */

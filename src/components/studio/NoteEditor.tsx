@@ -1,5 +1,6 @@
 "use client";
 
+import { asset } from "@/lib/asset";
 import { ArrowDown, ArrowUp, Copy, Heading2, List, ListPlus, Pilcrow, Plus, Quote, Table2, Trash2, UserPlus, X } from "lucide-react";
 import { useState } from "react";
 
@@ -175,7 +176,7 @@ export function NoteEditor({
       <header className="mb-6">
         <div className="flex items-center justify-between">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/acer-logo.png" alt="ACER" className="h-9 w-auto" />
+          <img src={asset("/acer-logo.png")} alt="ACER" className="h-9 w-auto" />
           <div className="text-right">
             <InlineInput
               value={note.meta.documentType}

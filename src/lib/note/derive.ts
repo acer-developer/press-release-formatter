@@ -15,7 +15,18 @@ export interface KeyFacts {
 
 const RATING_RE = /\bACER\s+(?:A1\+?|A[1-4]\+?|AAA|AA[+-]?|A[+-]?|BBB[+-]?|BB[+-]?|B[+-]?|C|D)(?:\s*\(CE\))?(?:\s*\(SO\))?/;
 const OUTLOOK_RE = /\b(Stable|Positive|Negative|Developing)\b/;
-const ACTION_RE = /\b(Reaffirmed|Assigned|Upgraded|Downgraded|Withdrawn|Placed on Watch|Revised|Migrated)\b/i;
+const ACTION_RE = /\b(Reaffirm(?:ed|s)?|Assign(?:ed|s)?|Upgrade[ds]?|Downgrade[ds]?|Withdr(?:awn|aws)|Placed on Watch|Revise[ds]?|Migrated)\b/i;
+
+const normaliseAction = (raw: string) => {
+  const w = raw.toLowerCase();
+  if (w.startsWith("reaffirm")) return "Reaffirmed";
+  if (w.startsWith("assign")) return "Assigned";
+  if (w.startsWith("upgrade")) return "Upgraded";
+  if (w.startsWith("downgrade")) return "Downgraded";
+  if (w.startsWith("withdr")) return "Withdrawn";
+  if (w.startsWith("revise")) return "Revised";
+  return raw[0].toUpperCase() + raw.slice(1).toLowerCase();
+};
 
 export const parseNumber = (s: string): number | null => {
   const m = s.replace(/,/g, "").match(/-?\d+(?:\.\d+)?/);
@@ -40,7 +51,7 @@ export function deriveKeyFacts(note: RatingNote): KeyFacts {
     if (!facts.outlook) facts.outlook = h.match(OUTLOOK_RE)?.[1] ?? "";
     if (!facts.action) {
       const a = h.match(ACTION_RE)?.[1];
-      if (a) facts.action = a[0].toUpperCase() + a.slice(1).toLowerCase();
+      if (a) facts.action = normaliseAction(a);
     }
   }
   if (instr) {

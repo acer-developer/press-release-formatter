@@ -1,9 +1,14 @@
 import type { NextConfig } from "next";
 
+// Static site: everything (extraction, PDF rendering, storage, AI calls) runs in the browser.
+// NEXT_PUBLIC_BASE_PATH is set by the Pages workflow to "/<repo>"; empty for local runs.
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+
 const nextConfig: NextConfig = {
-  // Native/WASM packages are loaded from node_modules at runtime instead of being bundled.
-  serverExternalPackages: ["better-sqlite3", "@formepdf/core", "@formepdf/react", "unpdf", "mammoth"],
-  outputFileTracingIncludes: { "/api/render": ["./public/fonts/**", "./public/acer-logo.png"] },
+  output: "export",
+  basePath,
+  trailingSlash: true,
+  images: { unoptimized: true },
 };
 
 export default nextConfig;

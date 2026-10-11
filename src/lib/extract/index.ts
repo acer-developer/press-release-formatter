@@ -3,7 +3,7 @@ import { parse as parseHtml, type HTMLElement } from "node-html-parser";
 
 import { RatingNoteSchema, type RatingNote } from "@/lib/note/schema";
 
-import { extractPdfLayout, layoutToText } from "./pdf-layout";
+import { extractPdfLayout, layoutToText, type PdfJs } from "./pdf-layout";
 import { segmentPdf, segmentText, type DocItem } from "./segment";
 
 export interface ExtractedDocument {
@@ -18,11 +18,11 @@ export interface ExtractedDocument {
 
 export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
 
-export async function extractDocument(name: string, data: Uint8Array): Promise<ExtractedDocument> {
+export async function extractDocument(name: string, data: Uint8Array, pdfjs: PdfJs): Promise<ExtractedDocument> {
   const lower = name.toLowerCase();
   const isPdf = lower.endsWith(".pdf") || (data[0] === 0x25 && data[1] === 0x50 && data[2] === 0x44 && data[3] === 0x46);
   if (isPdf) {
-    const layout = await extractPdfLayout(data);
+    const layout = await extractPdfLayout(data, pdfjs);
     const text = layoutToText(layout);
     if (text.replace(/\s/g, "").length < 40) {
       throw new Error("This PDF has no selectable text (it is probably a scan). Upload a text-based PDF or the DOCX source.");
@@ -49,7 +49,8 @@ function jsonToLines(value: unknown, prefix = ""): string {
 }
 
 async function extractDocx(data: Uint8Array): Promise<ExtractedDocument> {
-  const { value: html } = await mammoth.convertToHtml({ buffer: Buffer.from(data) });
+  const buffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
+  const { value: html } = await mammoth.convertToHtml({ arrayBuffer: buffer });
   const root = parseHtml(html);
   const items: DocItem[] = [];
   const textParts: string[] = [];

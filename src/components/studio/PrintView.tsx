@@ -4,9 +4,10 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import type { RatingNote } from "@/lib/note/schema";
+import { loadPdfJs } from "@/lib/pdfjs-client";
 
 /**
- * Exact print output: the server renders the PDF, and pdf.js paints each page onto a canvas so
+ * Exact print output: the PDF is rendered in the browser (Forme WASM), and pdf.js paints each page onto a canvas so
  * the preview looks identical in every browser (no dependency on a built-in PDF viewer).
  */
 export function PrintView({ note }: { note: RatingNote }) {
@@ -22,12 +23,10 @@ export function PrintView({ note }: { note: RatingNote }) {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch("/api/render", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ note }) });
-        if (!res.ok) throw new Error((await res.json()).error || "Render failed");
-        const bytes = new Uint8Array(await res.arrayBuffer());
-        const pdfjs = await import("pdfjs-dist");
-        pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
-        const doc = await pdfjs.getDocument({ data: bytes }).promise;
+        const { renderNotePdf } = await import("@/lib/pdf/render");
+        const bytes = await renderNotePdf(note);
+        const pdfjs = (await loadPdfJs()) as unknown as typeof import("pdfjs-dist");
+        const doc = await pdfjs.getDocument({ data: bytes.slice() }).promise;
         if (id !== seq.current || !holder.current) return;
         const width = Math.min(holder.current.clientWidth || 820, 860);
         const ratio = window.devicePixelRatio || 1;
