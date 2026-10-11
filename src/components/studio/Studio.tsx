@@ -30,6 +30,7 @@ import { produce } from "@/lib/note/ops";
 import { loadPdfJs } from "@/lib/pdfjs-client";
 import { loadAiSettings, saveAiSettings } from "@/lib/settings";
 import { saveNote } from "@/lib/store";
+import { TEMPLATES } from "@/lib/pdf/templates/templates";
 import { northwindSample } from "@/lib/note/samples/northwind";
 import { emptyNote, type Issue, type RatingNote } from "@/lib/note/schema";
 import { verifyNote } from "@/lib/verify/verify";
@@ -185,8 +186,8 @@ export function Studio() {
         ai,
         pdfjs: await loadPdfJs(),
       });
-      // Presentation choices made before generating (charts, date) carry over to the new note.
-      replaceNote({ ...result.note, options: { charts: note.options?.charts ?? false, dateMode: note.options?.dateMode ?? "date" } });
+      // Presentation choices made before generating (charts, date, template) carry over to the new note.
+      replaceNote({ ...result.note, options: { charts: note.options?.charts ?? false, dateMode: note.options?.dateMode ?? "date", template: note.options?.template ?? "boardroom" } });
       setSourceText(result.sourceText);
       setServerIssues(result.issues);
       setEngineUsed(result.engine);
@@ -279,6 +280,19 @@ export function Studio() {
             <Redo2 size={15} />
           </ToolbarButton>
           <div className="mx-1 h-6 w-px bg-hairline" />
+          <div className="inline-flex h-8 items-center rounded-md border border-hairline p-0.5" role="group" aria-label="Template">
+            {TEMPLATES.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                title={`${t.letter}: ${t.name}. ${t.blurb}`}
+                onClick={() => mutate((d) => void (d.options = { ...d.options, template: t.id }))}
+                className={`h-full rounded px-2.5 text-[12px] font-semibold ${(note.options?.template ?? "boardroom") === t.id ? "bg-deep text-white" : "text-muted hover:text-heading"}`}
+              >
+                {t.letter} <span className="font-medium">{t.name}</span>
+              </button>
+            ))}
+          </div>
           <button
             type="button"
             onClick={() => mutate((d) => void (d.options = { ...d.options, charts: !charts }))}
@@ -526,11 +540,11 @@ export function Studio() {
               </button>
             ))}
             <span className="ml-3 text-[11px] text-muted">
-              {view === "page" ? "Click any text, heading or table cell to edit it in place." : "Exact PDF output, refreshed as you edit."}
+              {view === "page" ? "Click any text, heading or table cell to edit it in place. Layout is chosen in Print view or the toolbar." : "Exact PDF output in the chosen template, refreshed as you edit."}
             </span>
           </div>
           <div className="scroll-thin min-h-0 flex-1 overflow-y-auto px-8 py-8">
-            {view === "page" ? <NoteEditor note={note} mutate={mutate} issuesByBlock={issuesByBlock} focusId={focusId} /> : <PrintView note={note} />}
+            {view === "page" ? <NoteEditor note={note} mutate={mutate} issuesByBlock={issuesByBlock} focusId={focusId} /> : <PrintView note={note} onTemplate={(t) => mutate((d) => void (d.options = { ...d.options, template: t }))} />}
           </div>
         </main>
       </div>

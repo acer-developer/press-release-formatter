@@ -65,8 +65,10 @@ export const RatingNoteSchema = z.object({
       charts: z.boolean().default(false),
       /** "date" prints meta.date; "none" omits the date everywhere. */
       dateMode: z.enum(["date", "none"]).default("date"),
+      /** PDF layout: A Boardroom, B Scorecard, C Report. Content is identical in all three. */
+      template: z.enum(["boardroom", "scorecard", "report"]).default("boardroom"),
     })
-    .default({ charts: false, dateMode: "date" }),
+    .default({ charts: false, dateMode: "date", template: "boardroom" }),
 });
 export type RatingNote = z.infer<typeof RatingNoteSchema>;
 
@@ -96,7 +98,7 @@ export const emptyNote = (): RatingNote => ({
   sections: [],
   contacts: [],
   disclaimer: DEFAULT_DISCLAIMER,
-  options: { charts: false, dateMode: "date" },
+  options: { charts: false, dateMode: "date", template: "boardroom" },
 });
 
 export const DEFAULT_DISCLAIMER =

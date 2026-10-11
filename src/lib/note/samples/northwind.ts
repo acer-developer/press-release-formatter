@@ -145,5 +145,5 @@ export const northwindSample: RatingNote = {
     { role: "Lead Analyst", name: "Sample Lead", phone: "+91-00 0000000", email: "lead@example.com" },
   ],
   disclaimer: DEFAULT_DISCLAIMER,
-  options: { charts: false, dateMode: "date" },
+  options: { charts: false, dateMode: "date", template: "boardroom" },
 };
