@@ -85,6 +85,7 @@ Numbers are compared in canonical form (`12.50` equals `12.5`, grouping commas i
 
 - `RatingNoteDocument.tsx` is the root `<Document>`; it applies `printSafe` and hands the note to the chosen template.
 - `templates/shared.tsx` holds the briefing builder (`buildBriefing`: key facts, first-sentence key messages, drivers, triggers, KPIs with computed change), native Forme tables (header rows repeat on every page), charts (pdfcn `PdfGraph`, opt-in, round axis ticks), running header and footer, and `FullBody`, which prints every section in full.
+- Colour schemes (`pdf-themes/acer.ts`): `PALETTES.green` and `PALETTES.teal`; `applyPalette` sets the scheme for each render from `note.options.palette`. In teal, fills behind white text use #23807C (4.7:1 contrast) and the brand teals #3AAFA9 / #3AA4A9 carry accents and rules. The portal applies the same scheme through CSS variables under `[data-palette]`.
 - `templates/templates.tsx` defines **A Boardroom**, **B Scorecard** and **C Report**. Each is a cover (plus a summary page for A and B) followed by the full note with its own heading, driver and table style.
 - Page-break rules: headings and subheadings are kept with the start of what follows; blocks under about 2,200 characters never split; table headers repeat; long cells are allowed to flow.
 - `render.tsx` runs Forme's WASM engine in the browser with the brand fonts and logo fetched from the site.

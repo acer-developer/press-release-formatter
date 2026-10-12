@@ -17,7 +17,7 @@ const From = ({ children, light }: { children: React.ReactNode; light?: boolean 
   <div className={`mt-2 text-[10px] italic ${light ? "text-white/60" : "text-muted"}`}>{children}</div>
 );
 
-const Up = ({ color = "#43927D" }: { color?: string }) => (
+const Up = ({ color = "var(--color-accent)" }: { color?: string }) => (
   <svg width="7" height="7" viewBox="0 0 10 10" className="mt-[5px] shrink-0" aria-hidden="true">
     <path d="M5 0 L10 10 L0 10 Z" fill={color} />
   </svg>
@@ -32,7 +32,7 @@ export function DateControl({ note, mutate, dark, align = "right" }: { note: Rat
   const mode = note.options?.dateMode ?? "date";
   return (
     <div className={`flex flex-col gap-1 ${align === "right" ? "items-end" : "items-start"}`}>
-      <div className={`inline-flex rounded-md p-0.5 text-[10.5px] font-medium ${dark ? "bg-white/10" : "bg-mist"}`}>
+      <div className={`inline-flex shrink-0 whitespace-nowrap rounded-md p-0.5 text-[10.5px] font-medium ${dark ? "bg-white/10" : "bg-mist"}`}>
         {(
           [
             ["date", "Add date"],
@@ -55,7 +55,7 @@ export function DateControl({ note, mutate, dark, align = "right" }: { note: Rat
             value={note.meta.date}
             onChange={(v) => mutate((d) => void (d.meta.date = v))}
             placeholder="Date"
-            className={`w-36 text-[11px] ${align === "right" ? "text-right" : ""} ${dark ? "!text-white" : "text-heading"}`}
+            className={`w-40 text-[11px] ${align === "right" ? "text-right" : ""} ${dark ? "!text-white" : "text-heading"}`}
             ariaLabel="Date"
           />
           <label className={`relative flex h-6 w-6 cursor-pointer items-center justify-center rounded border ${dark ? "border-white/30 text-white" : "border-hairline bg-white text-muted hover:text-heading"}`} title="Pick a date">
@@ -116,11 +116,11 @@ function BoardroomCover({ note, mutate, b }: { note: RatingNote; mutate: Mutate;
       <div className="bg-deep px-14 pt-7">
         <div className="text-[9.5px] font-bold uppercase tracking-[0.2em] text-lime">Credit rating action</div>
         <Company note={note} mutate={mutate} className="mt-2 font-serif text-[36px] font-bold leading-tight !text-white placeholder:!text-white/40" />
-        <Headline note={note} mutate={mutate} className="mt-1 max-w-[560px] text-[15px] leading-snug !text-[#D6E6E0] placeholder:!text-white/40" />
-        <div className="mt-6 grid grid-cols-4 border-t border-[#4F7A6E]" title="Derived from the headline and instruments table">
+        <Headline note={note} mutate={mutate} className="mt-1 max-w-[560px] text-[15px] leading-snug !text-banner-text placeholder:!text-white/40" />
+        <div className="mt-6 grid grid-cols-4 border-t border-banner-rule" title="Derived from the headline and instruments table">
           {tiles.map(([l, v], i) => (
-            <div key={l} className={`py-4 ${i ? "border-l border-[#4F7A6E] pl-4" : ""}`}>
-              <div className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#9FC7BA]">{l}</div>
+            <div key={l} className={`py-4 ${i ? "border-l border-banner-rule pl-4" : ""}`}>
+              <div className="text-[9px] font-bold uppercase tracking-[0.16em] text-banner-label">{l}</div>
               <div className="mt-1 font-serif text-[20px] font-bold text-white">{v || "-"}</div>
             </div>
           ))}
@@ -186,7 +186,7 @@ function ScorecardCover({ note, mutate, b }: { note: RatingNote; mutate: Mutate;
   return (
     <div className="-mx-14 -mt-8 mb-6 grid grid-cols-[210px_1fr]">
       <aside className="relative bg-mist px-6 pb-6 pt-7">
-        <div className="absolute inset-y-0 right-0 w-[3px]" style={{ background: "linear-gradient(180deg,#8EC641 0%,#54B69C 60%,#43927D 100%)" }} />
+        <div className="brand-gradient-v absolute inset-y-0 right-0 w-[3px]" />
         <Logo className="h-10" />
         <div className="mt-8 space-y-4" title="Derived from the headline, instruments table and liquidity section">
           {facts.map(([l, v, size]) => (
@@ -258,7 +258,7 @@ function ReportCover({ note, mutate, b }: { note: RatingNote; mutate: Mutate; b:
       <Headline note={note} mutate={mutate} className="mt-1 text-[15px] leading-snug text-muted" />
       <div className="mt-3 flex flex-wrap gap-2">
         {b.facts.rating ? (
-          <span className="rounded-full bg-[#E7F4EE] px-3 py-1 text-[11px] font-bold text-primary">
+          <span className="rounded-full bg-green-tint px-3 py-1 text-[11px] font-bold text-primary">
             Rating: {b.facts.rating}
             {b.facts.outlook ? ` (${b.facts.outlook})` : ""}
           </span>
@@ -270,7 +270,7 @@ function ReportCover({ note, mutate, b }: { note: RatingNote; mutate: Mutate; b:
           <div className="text-[9.5px] font-bold uppercase tracking-[0.18em] text-muted">Executive summary</div>
           <div className="mt-3 grid grid-cols-2 gap-3">
             {metrics.map((m) => (
-              <div key={m.l} className="border border-hairline p-3" style={{ borderLeft: `3px solid ${m.warn ? "#9A6A16" : "#43927D"}` }}>
+              <div key={m.l} className="border border-hairline p-3" style={{ borderLeft: `3px solid ${m.warn ? "var(--color-amber)" : "var(--color-accent)"}` }}>
                 <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted">{m.l}</div>
                 <div className="mt-1 text-[22px] font-bold text-heading">{m.v}</div>
                 {m.p ? (

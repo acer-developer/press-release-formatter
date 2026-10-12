@@ -67,8 +67,10 @@ export const RatingNoteSchema = z.object({
       dateMode: z.enum(["date", "none"]).default("date"),
       /** PDF layout: A Boardroom, B Scorecard, C Report. Content is identical in all three. */
       template: z.enum(["boardroom", "scorecard", "report"]).default("boardroom"),
+      /** Colour scheme: ACER dark green or ACER teal. */
+      palette: z.enum(["green", "teal"]).default("green"),
     })
-    .default({ charts: false, dateMode: "date", template: "boardroom" }),
+    .default({ charts: false, dateMode: "date", template: "boardroom", palette: "green" }),
 });
 export type RatingNote = z.infer<typeof RatingNoteSchema>;
 
@@ -98,7 +100,7 @@ export const emptyNote = (): RatingNote => ({
   sections: [],
   contacts: [],
   disclaimer: DEFAULT_DISCLAIMER,
-  options: { charts: false, dateMode: "date", template: "boardroom" },
+  options: { charts: false, dateMode: "date", template: "boardroom", palette: "green" },
 });
 
 export const DEFAULT_DISCLAIMER =

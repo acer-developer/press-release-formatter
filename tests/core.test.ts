@@ -121,3 +121,14 @@ describe("rules parser on raw text", () => {
     expect(sens.type === "bullets" && sens.items).toEqual(["Improvement in scale", "Better margins"]);
   });
 });
+
+describe("briefing KPIs", () => {
+  it("never labels a margin row as an amount", async () => {
+    const { buildBriefing } = await import("@/lib/note/briefing");
+    const note = structuredClone(northwindSample);
+    const t = note.sections.find((s) => s.title.startsWith("Key Financial"))!.blocks[0];
+    if (t.type === "table") t.table.rows.push(["PAT margin (%)", "9.00%", "9.50%", "10.06%"]);
+    const kpis = buildBriefing(note).kpis;
+    expect(kpis.find((k) => k.label === "Profit after tax")).toBeUndefined();
+  });
+});

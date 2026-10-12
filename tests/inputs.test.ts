@@ -54,7 +54,7 @@ describe("every input type", () => {
 
 describe("rendering edge cases", () => {
   it.each(TEMPLATES.map((t) => t.id))("renders a blank note in %s without crashing", async (template) => {
-    const note = { ...emptyNote(), options: { charts: true, dateMode: "none" as const, template } };
+    const note = { ...emptyNote(), options: { charts: true, dateMode: "none" as const, template, palette: "teal" as const } };
     expect((await renderDocument(RatingNoteDocument({ note, assets: { fonts } }))).length).toBeGreaterThan(500);
   });
 

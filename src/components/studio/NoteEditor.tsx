@@ -52,7 +52,7 @@ function AddBlockMenu({ onAdd }: { onAdd: (t: BlockType) => void }) {
   );
 }
 
-const toneOf = (ctx: string) => (/strength|positive/i.test(ctx) ? "#43927D" : /weakness|negative/i.test(ctx) ? "#9A6A16" : "#22493E");
+const toneOf = (ctx: string) => (/strength|positive/i.test(ctx) ? "var(--color-accent)" : /weakness|negative/i.test(ctx) ? "var(--color-amber)" : "var(--color-deep)");
 
 function BlockBody({ block, onChange, exhibit, tone, template, sensitivity }: { block: NoteBlock; onChange: (b: NoteBlock) => void; exhibit: number; tone: string; template: EditorTemplate; sensitivity: boolean }) {
   switch (block.type) {
@@ -66,13 +66,13 @@ function BlockBody({ block, onChange, exhibit, tone, template, sensitivity }: { 
             value={block.text}
             onChange={(text) => onChange({ ...block, text })}
             placeholder="Subheading"
-            className={pill ? `rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${/strength|positive/i.test(block.text) ? "bg-[#E7F4EE] text-primary" : "bg-[#FBF3E4] text-amber"}` : "text-[13.5px] font-semibold text-heading"}
+            className={pill ? `rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${/strength|positive/i.test(block.text) ? "bg-green-tint text-primary" : "bg-[#FBF3E4] text-amber"}` : "text-[13.5px] font-semibold text-heading"}
           />
         </div>
       );
     }
     case "driver": {
-      const kind = tone === "#43927D" ? "s" : tone === "#9A6A16" ? "w" : "n";
+      const kind = tone === "var(--color-accent)" ? "s" : tone === "var(--color-amber)" ? "w" : "n";
       const label = kind === "n" ? "" : sensitivity ? (kind === "s" ? "Upside" : "Downside") : kind === "s" ? "Strength" : "Weakness";
       return (
         <div className={`flex gap-3 ${template === "report" ? "rounded-lg border border-hairline p-3" : ""}`}>
@@ -81,7 +81,7 @@ function BlockBody({ block, onChange, exhibit, tone, template, sensitivity }: { 
             <div className="flex items-start gap-2">
               <InlineInput value={block.title} onChange={(title) => onChange({ ...block, title })} placeholder="Argument title" className="flex-1 text-[13.5px] font-semibold text-heading" />
               {template !== "boardroom" && label ? (
-                <span className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[9.5px] font-bold ${kind === "s" ? "bg-[#E7F4EE] text-primary" : "bg-[#FBF3E4] text-amber"}`}>{label}</span>
+                <span className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[9.5px] font-bold ${kind === "s" ? "bg-green-tint text-primary" : "bg-[#FBF3E4] text-amber"}`}>{label}</span>
               ) : null}
             </div>
             <AutoText value={block.text} onChange={(text) => onChange({ ...block, text })} placeholder="Evidence and implication" className="text-[13px] leading-[1.6]" />
@@ -263,7 +263,7 @@ export function NoteEditor({
         <h3 className="font-serif text-[19px] font-semibold text-heading">Analytical Contacts</h3>
         <div className="mt-3 grid grid-cols-2 gap-3">
           {note.contacts.map((c, i) => (
-            <div key={i} className="group relative border border-hairline p-3" style={{ borderTop: "2px solid #22493E" }}>
+            <div key={i} className="group relative border border-hairline p-3" style={{ borderTop: "2px solid var(--color-deep)" }}>
               <button type="button" title="Remove contact" onClick={() => mutate((d) => void d.contacts.splice(i, 1))} className="absolute right-1.5 top-1.5 hidden text-muted hover:text-red-700 group-hover:block">
                 <X size={13} />
               </button>

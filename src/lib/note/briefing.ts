@@ -101,7 +101,7 @@ export function buildBriefing(note: RatingNote): Briefing {
     };
     pick(/^(total\s+)?(revenue|total income|operating income|net sales|income from operations)/i, fin.revenueLabel || "Revenue", "amount");
     pick(/^(ebitda|operating profit|pbt)\s*\(/i, "EBITDA", "amount");
-    pick(/^(pat|profit after tax|net profit)/i, "Profit after tax", "amount");
+    pick(/^(pat|profit after tax|net profit)(?!.*margin)/i, "Profit after tax", "amount");
     pick(/^ebitda margin/i, "EBITDA margin", "pct");
     pick(/leverage|gearing|debt\s*\/\s*equity/i, "Leverage", "x");
     pick(/^(crar|capital adequacy)/i, "CRAR", "pct");

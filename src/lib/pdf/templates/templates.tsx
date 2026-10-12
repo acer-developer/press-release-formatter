@@ -135,12 +135,12 @@ function BoardroomPages({ note, assets }: { note: RatingNote; assets: TemplateAs
         <View style={{ backgroundColor: brand.deep, paddingHorizontal: MARGIN_X, paddingTop: 26 }}>
           <Text style={{ ...caps, color: brand.lime, marginBottom: 10 }}>Credit rating action</Text>
           <Text style={{ ...serif, color: "#ffffff", fontSize: 30, lineHeight: 1.1 }}>{note.meta.companyName}</Text>
-          {note.meta.headline ? <Text style={{ fontFamily: F.body, fontSize: 12, color: "#D6E6E0", marginTop: 8, lineHeight: 1.4, maxWidth: 440 }}>{note.meta.headline}</Text> : null}
+          {note.meta.headline ? <Text style={{ fontFamily: F.body, fontSize: 12, color: brand.bannerText, marginTop: 8, lineHeight: 1.4, maxWidth: 440 }}>{note.meta.headline}</Text> : null}
           {tiles.length ? (
-            <View style={{ flexDirection: "row", marginTop: 22, borderTopWidth: 0.6, borderTopColor: "#4F7A6E" }}>
+            <View style={{ flexDirection: "row", marginTop: 22, borderTopWidth: 0.6, borderTopColor: brand.bannerRule }}>
               {tiles.map(([l, v], i) => (
-                <View key={l} style={{ flex: 1, paddingVertical: 12, paddingLeft: i ? 12 : 0, borderLeftWidth: i ? 0.6 : 0, borderLeftColor: "#4F7A6E" }}>
-                  <Text style={{ ...caps, color: "#9FC7BA", marginBottom: 4 }}>{l}</Text>
+                <View key={l} style={{ flex: 1, paddingVertical: 12, paddingLeft: i ? 12 : 0, borderLeftWidth: i ? 0.6 : 0, borderLeftColor: brand.bannerRule }}>
+                  <Text style={{ ...caps, color: brand.bannerLabel, marginBottom: 4 }}>{l}</Text>
                   <Text style={{ ...serif, color: "#ffffff", fontSize: 17 }}>{v}</Text>
                 </View>
               ))}
@@ -290,7 +290,7 @@ function ScorecardPages({ note, assets }: { note: RatingNote; assets: TemplateAs
     <>
       <Page size="A4" margin={0} style={{ fontFamily: F.body, color: brand.ink }}>
         <View style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: side, backgroundColor: brand.mist }} />
-        <View style={{ position: "absolute", left: side, top: 0, bottom: 0, width: 3, background: "linear-gradient(180deg, #8EC641 0%, #54B69C 60%, #43927D 100%)" } as Style} />
+        <View style={{ position: "absolute", left: side, top: 0, bottom: 0, width: 3, background: brand.gradientV } as Style} />
         <View style={{ flexDirection: "row" }}>
           <View style={{ width: side, paddingHorizontal: 20, paddingTop: 26 }}>
             {assets.logo ? <Image src={assets.logo} style={{ width: 104, marginBottom: 30 }} /> : null}

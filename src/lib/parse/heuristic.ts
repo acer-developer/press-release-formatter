@@ -129,7 +129,7 @@ export function parseHeuristic(items: DocItem[]): RatingNote {
     sections: [],
     contacts: [],
     disclaimer: "",
-    options: { charts: false, dateMode: "date", template: "boardroom" },
+    options: { charts: false, dateMode: "date", template: "boardroom", palette: "green" },
   };
 
   let idx = 0;
