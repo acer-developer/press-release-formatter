@@ -68,7 +68,7 @@ function toTable(rows: string[][]): NoteTable {
       body = [body[0].map((c, i) => [c, body[1][i]].filter(Boolean).join(" ")), ...body.slice(2)];
     }
   }
-  const [columns, ...allRows] = body;
+  const [columns = [], ...allRows] = body;
   const width = columns.length;
   // Footnotes typed inside the table border ("#Please refer to Annexure V...") are rows with a
   // single filled cell starting with a footnote marker; they belong under the table instead.
@@ -183,7 +183,7 @@ export function parseHeuristic(items: DocItem[]): RatingNote {
         note.contacts.push(...contactsFromTable(it.rows));
         continue;
       }
-      if (rule?.kind === "skip") continue;
+      if (rule?.kind === "skip" || !it.rows.some((r) => r.length)) continue;
       const table = toTable(it.rows);
       // A rating table straight under the title block is the instruments table, heading or not.
       const leadingRatingTable = !section && !note.instruments && table.columns.some((c) => /rating/i.test(c)) && table.columns.some((c) => /amount|size|limit|crore/i.test(c));
@@ -242,8 +242,8 @@ export function parseHeuristic(items: DocItem[]): RatingNote {
 
     if (rule?.kind === "skip") continue;
     if (rule?.kind === "disclaimer") {
-      if (disclaimer.length && it.gap < 6 && !endsSentence(disclaimer[disclaimer.length - 1])) disclaimer[disclaimer.length - 1] += ` ${it.text}`;
-      else if (disclaimer.length && it.gap < 6) disclaimer[disclaimer.length - 1] += ` ${it.text}`;
+      // Lines close together belong to the same disclaimer paragraph; a larger gap starts a new one.
+      if (disclaimer.length && it.gap < 6) disclaimer[disclaimer.length - 1] += ` ${it.text}`;
       else disclaimer.push(it.text);
       continue;
     }
@@ -295,11 +295,14 @@ export function parseHeuristic(items: DocItem[]): RatingNote {
     }
 
     // ── Lead-in paragraphs: "Title- body"
-    if (it.boldLead && it.boldLead.length < it.text.length + 1) {
+    // Only when text follows the bold lead; a fully bold sentence stays a paragraph.
+    const leadBody = it.boldLead ? it.text.slice(it.text.indexOf(it.boldLead) + it.boldLead.length).replace(/^[\s\-–—:]+/, "") : "";
+    if (it.boldLead && leadBody) {
       const title = it.boldLead.replace(/[-–—:]\s*$/, "").trim();
-      const body = it.text.slice(it.text.indexOf(it.boldLead) + it.boldLead.length).replace(/^[\s\-–—:]+/, "");
-      lastDriver = { id: newId(), type: "driver", title, text: body };
-      blocks().push(lastDriver);
+      // blocks() may open a section, which resets lastDriver, so take the list first.
+      const list = blocks();
+      lastDriver = { id: newId(), type: "driver", title, text: leadBody };
+      list.push(lastDriver);
       pendingDriverTitle = "";
       continue;
     }
@@ -307,8 +310,10 @@ export function parseHeuristic(items: DocItem[]): RatingNote {
     // ── Paragraph text
     const continues = it.gap < 6 || (it.gap === Infinity && prevBlock && !endsSentence(textOf(prevBlock)));
     if (pendingDriverTitle) {
-      lastDriver = { id: newId(), type: "driver", title: pendingDriverTitle, text: it.text };
-      blocks().push(lastDriver);
+      const title = pendingDriverTitle;
+      const list = blocks();
+      lastDriver = { id: newId(), type: "driver", title, text: it.text };
+      list.push(lastDriver);
       pendingDriverTitle = "";
       continue;
     }

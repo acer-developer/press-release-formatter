@@ -59,7 +59,7 @@ export const Pill = ({ text, tone, filled }: { text: string; tone: "good" | "war
           paddingHorizontal: 6,
         }}
       >
-        <Text style={{ fontFamily: F.body, fontSize: 6.3, fontWeight: 700, color: tone === "warn" ? brand.amber : tone === "good" ? brand.primary : c }}>{text}</Text>
+        <Text style={{ fontFamily: F.body, fontSize: 6.3, fontWeight: 700, color: tone === "warn" ? brand.amber : brand.tealInk }}>{text}</Text>
       </View>
     </View>
   );
@@ -67,7 +67,7 @@ export const Pill = ({ text, tone, filled }: { text: string; tone: "good" | "war
 
 export const ExhibitLabel = ({ n, title }: { n: number; title?: string }) => (
   <View style={{ flexDirection: "row", alignItems: "flex-end", marginBottom: 5 }} wrap={false}>
-    <Text style={{ ...caps, color: brand.accent, marginRight: 7 }}>{`Exhibit ${n}`}</Text>
+    <Text style={{ ...caps, color: brand.tealInk, marginRight: 7 }}>{`Exhibit ${n}`}</Text>
     {title ? <Text style={{ fontFamily: F.body, fontSize: 8.4, fontWeight: 700, color: brand.heading }}>{title}</Text> : null}
   </View>
 );
@@ -135,7 +135,7 @@ export function FinanceChart({ b, width, height = 140, title = true }: { b: Brie
   const data = paired
     ? [
         { name: fin.revenueLabel || "Revenue", data: rev, color: brand.deep },
-        { name: fin.profitLabel || "EBITDA", data: prof, color: brand.light },
+        { name: fin.profitLabel || "EBITDA", data: prof, color: brand.chart2 },
       ]
     : rev.map((d) => ({ ...d, color: brand.deep }));
   return (
@@ -239,7 +239,7 @@ function BodyBlock({ block, tone, look, exhibitNo, context, sensitivity }: { blo
           ) : (
             <>
               <View style={{ width: 14, height: 2, backgroundColor: toneColor(t), marginRight: 6 }} />
-              <Text style={{ ...caps, color: t === "s" ? brand.primary : brand.amber }}>{block.text}</Text>
+              <Text style={{ ...caps, color: t === "s" ? brand.tealInk : brand.amber }}>{block.text}</Text>
             </>
           )}
         </View>

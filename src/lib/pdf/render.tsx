@@ -48,8 +48,15 @@ async function loadAssets(): Promise<RenderAssets> {
 }
 
 export async function renderNotePdf(note: RatingNote): Promise<Uint8Array> {
-  enginePromise ??= init(new URL(asset("/forme_bg.wasm"), window.location.href));
-  assetsPromise ??= loadAssets();
+  // A failed load (offline moment, flaky network) is not cached: the next render tries again.
+  enginePromise ??= init(new URL(asset("/forme_bg.wasm"), window.location.href)).catch((e) => {
+    enginePromise = null;
+    throw e;
+  });
+  assetsPromise ??= loadAssets().catch((e) => {
+    assetsPromise = null;
+    throw e;
+  });
   const [, assets] = await Promise.all([enginePromise, assetsPromise]);
   // Forme expects the root element to be <Document>, so call the component directly.
   return renderDocument(RatingNoteDocument({ note, assets }));

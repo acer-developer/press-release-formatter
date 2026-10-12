@@ -26,7 +26,7 @@ export function TableEditor({
   return (
     <div className="my-3">
       <div className="mb-1.5 flex items-baseline gap-2">
-        <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-accent">Exhibit {exhibit}</span>
+        <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-teal-ink">Exhibit {exhibit}</span>
         <InlineInput value={table.title} onChange={(v) => onChange({ ...table, title: v })} placeholder="Exhibit title" className="flex-1 text-[12px] font-semibold text-heading" />
       </div>
       <div className="overflow-x-auto scroll-thin">

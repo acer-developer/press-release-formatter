@@ -21,7 +21,7 @@ Options: **Charts** are off unless switched on. **Date** can be printed (with a 
 
 | | Template | Character |
 | --- | --- | --- |
-| A | Boardroom | Dark green cover banner with the rating facts, a three-point executive summary, strengths set against weaknesses, headline financials with year-on-year change |
+| A | Boardroom | Teal cover banner with the rating facts, a three-point executive summary, strengths set against weaknesses, headline financials with year-on-year change |
 | B | Scorecard | Key-facts sidebar with a strength/weakness balance bar, a driver scorecard table, upgrade and downgrade triggers |
 | C | Report | Built on pdfcn's report style: rounded cards, change badges, highlights and risks |
 
@@ -74,7 +74,7 @@ Keys are stored only in that browser and sent only to the provider. Never put a 
 ```bash
 npm install        # also copies the pdf.js worker and Forme WASM into public/
 npm run dev        # http://localhost:3000
-npm test           # unit, hallucination and end-to-end tests
+npm test           # unit, hallucination, end-to-end, fuzz and mutation tests
 npm run build      # static site in out/
 ```
 
@@ -85,7 +85,6 @@ Scripts (run with `npx tsx --tsconfig scripts/tsconfig.json <script>`):
 | `scripts/render-node.tsx in.pdf out.pdf [note.json]` | Render a document or note JSON to PDF from Node |
 | `scripts/audit.tsx a.pdf b.pdf ...` | Run the no-AI pipeline and print every checker finding |
 | `scripts/audit-ai.tsx <file or -textfile> [mode]` | Same with a Gemini draft (key in `GEMINI_KEY`) |
-| `scripts/preview-styles.tsx note.json outDir` | Render the template design exploration pages |
 
 `samples/` holds the Viviana Power Tech press release rebuilt in each template. `tests/fixtures/` holds three published ACER press releases and a DOCX test note.
 

@@ -26,8 +26,12 @@ export const brand = {
   gradientV: "linear-gradient(180deg, #3AAFA9 0%, #3AA4A9 55%, #23807C 100%)",
   /** Lines, labels and text placed on the teal banner. */
   bannerRule: "#5EA9A6",
-  bannerLabel: "#C3E8E5",
-  bannerText: "#E4F5F4",
+  bannerLabel: "#FFFFFF",
+  bannerText: "#FFFFFF",
+  /** Darker teal for small teal text (labels, badges, deltas): 6.3:1 on white. */
+  tealInk: "#1C6B68",
+  /** Second chart series, light enough to tell apart from `deep` in colour and greyscale. */
+  chart2: "#A8DCD9",
 };
 
 export const fonts = {

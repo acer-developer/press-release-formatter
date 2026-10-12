@@ -16,7 +16,7 @@ export interface ExtractedDocument {
   pages?: number;
 }
 
-export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
+export { MAX_UPLOAD_BYTES } from "@/lib/limits";
 
 export async function extractDocument(name: string, data: Uint8Array, pdfjs: PdfJs): Promise<ExtractedDocument> {
   const lower = name.toLowerCase();
@@ -32,10 +32,19 @@ export async function extractDocument(name: string, data: Uint8Array, pdfjs: Pdf
   if (lower.endsWith(".docx")) return extractDocx(data);
   const text = new TextDecoder("utf-8").decode(data);
   if (lower.endsWith(".json") || /^\s*\{/.test(text)) {
-    const parsed = RatingNoteSchema.safeParse(JSON.parse(text));
-    if (parsed.success) return { kind: "json", text: "", items: [], note: parsed.data };
-    // Arbitrary JSON (e.g. a data export): treat as text so every value is still traceable.
-    return { kind: "text", text, items: segmentText(jsonToLines(JSON.parse(text))) };
+    let json: unknown;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      // Not valid JSON (for example notes that start with "{Company}"): read it as text instead.
+      json = undefined;
+    }
+    if (json !== undefined) {
+      const parsed = RatingNoteSchema.safeParse(json);
+      if (parsed.success) return { kind: "json", text: "", items: [], note: parsed.data };
+      // Arbitrary JSON (e.g. a data export): flattened to text so every value is still traceable.
+      return { kind: "text", text, items: segmentText(jsonToLines(json)) };
+    }
   }
   return { kind: "text", text, items: segmentText(text) };
 }

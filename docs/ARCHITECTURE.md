@@ -112,8 +112,8 @@ src/
     pdf/                  RatingNoteDocument.tsx, render.tsx, templates/
     pdf-themes/acer.ts    brand palette and fonts
     store.ts, settings.ts, asset.ts, pdfjs-client.ts
-tests/                    unit, catch-rate and end-to-end tests with ACER fixtures
-scripts/                  render-node.tsx, audit.tsx, audit-ai.tsx, preview-styles.tsx, copy-assets.mjs
+tests/                    unit, catch-rate, end-to-end, regression and fuzz/mutation tests with ACER fixtures
+scripts/                  render-node.tsx, audit.tsx, audit-ai.tsx, copy-assets.mjs
 ```
 
 ## Premortem
@@ -139,6 +139,8 @@ The question asked before release: if this tool published a wrong press release,
 | Blank or partial note crashes the renderer | Blank note rendered in all templates | `tests/inputs.test.ts` |
 | Scanned PDF produces garbage | Rejected when there is no text layer | `extract/index.ts` |
 | API key leaks | Keys are never in the code or the site; stored only in the user's browser | code review, `git grep` |
+| Odd or corrupt input crashes the parser or renderer | Seeded fuzz tests: 500 random texts through the parser, 500 random notes through the verifier, random notes rendered in every template, corrupt files of every type | `tests/fuzz.test.ts` |
+| A changed figure slips past the checker | Mutation test: 300 random digit changes in three published notes, each must be flagged; every rating symbol not in the source must be flagged | `tests/fuzz.test.ts` |
 | Free AI tier overloaded | Retries with backoff and model fallback; rules engine works without AI | manual run with Gemini |
 
 Residual risks to keep in mind:

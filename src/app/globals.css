@@ -16,10 +16,12 @@
   --color-accent: #3aa4a9;
   --color-light: #3aafa9;
   --color-amber: #9a6a16;
+  --color-amber-tint: #fbf3e4;
+  --color-teal-ink: #1c6b68;
   --color-teal-tint: #e2f4f3;
   --color-banner-rule: #5ea9a6;
-  --color-banner-label: #c3e8e5;
-  --color-banner-text: #e4f5f4;
+  --color-banner-label: #ffffff;
+  --color-banner-text: #ffffff;
 }
 
 
@@ -31,8 +33,8 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-.brand-gradient { background: linear-gradient(90deg, #3aafa9 0%, #3aa4a9 55%, #23807c 100%); }
-.brand-gradient-v { background: linear-gradient(180deg, #3aafa9 0%, #3aa4a9 55%, #23807c 100%); }
+.brand-gradient { background: linear-gradient(90deg, var(--color-light) 0%, var(--color-accent) 55%, var(--color-deep) 100%); }
+.brand-gradient-v { background: linear-gradient(180deg, var(--color-light) 0%, var(--color-accent) 55%, var(--color-deep) 100%); }
 .paper { box-shadow: 0 1px 2px rgba(14, 40, 40, 0.06), 0 12px 40px -12px rgba(14, 40, 40, 0.18); }
 
 /* Inline editing: fields look like print until hovered or focused. */

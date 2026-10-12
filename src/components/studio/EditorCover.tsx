@@ -22,7 +22,7 @@ const Up = ({ color = "var(--color-accent)" }: { color?: string }) => (
     <path d="M5 0 L10 10 L0 10 Z" fill={color} />
   </svg>
 );
-const Down = ({ color = "#9A6A16" }: { color?: string }) => (
+const Down = ({ color = "var(--color-amber)" }: { color?: string }) => (
   <svg width="7" height="7" viewBox="0 0 10 10" className="mt-[5px] shrink-0" aria-hidden="true">
     <path d="M0 0 L10 0 L5 10 Z" fill={color} />
   </svg>
@@ -129,7 +129,7 @@ function BoardroomCover({ note, mutate, b }: { note: RatingNote; mutate: Mutate;
       <div className="brand-gradient h-[3px]" />
       <div className="grid grid-cols-[1.6fr_1fr] gap-6 px-14 pt-7">
         <div>
-          <div className="text-[9.5px] font-bold uppercase tracking-[0.2em] text-accent">Executive summary</div>
+          <div className="text-[9.5px] font-bold uppercase tracking-[0.2em] text-teal-ink">Executive summary</div>
           <div className="mt-1 font-serif text-[20px] font-bold text-heading">What drives the rating</div>
           <div className="mt-3 space-y-3">
             {b.keyMessages.length ? (
@@ -214,11 +214,11 @@ function ScorecardCover({ note, mutate, b }: { note: RatingNote; mutate: Mutate;
         </div>
       </aside>
       <div className="px-10 pt-9">
-        <InlineInput value={note.meta.documentType} onChange={(v) => mutate((d) => void (d.meta.documentType = v))} className="text-[9.5px] font-bold uppercase tracking-[0.2em] text-accent" ariaLabel="Document type" />
+        <InlineInput value={note.meta.documentType} onChange={(v) => mutate((d) => void (d.meta.documentType = v))} className="text-[9.5px] font-bold uppercase tracking-[0.2em] text-teal-ink" ariaLabel="Document type" />
         <Company note={note} mutate={mutate} className="mt-1 font-serif text-[34px] font-bold leading-tight text-heading" />
         <div className="my-4 h-[3px] w-14 bg-deep" />
         <Headline note={note} mutate={mutate} className="text-[16px] font-medium leading-snug text-heading" />
-        <div className="mt-6 text-[9.5px] font-bold uppercase tracking-[0.2em] text-accent">The rating in brief</div>
+        <div className="mt-6 text-[9.5px] font-bold uppercase tracking-[0.2em] text-teal-ink">The rating in brief</div>
         <div className="mt-2 space-y-2.5">
           {b.keyMessages.length ? (
             b.keyMessages.map((m, i) => (
@@ -253,12 +253,12 @@ function ReportCover({ note, mutate, b }: { note: RatingNote; mutate: Mutate; b:
         <DateControl note={note} mutate={mutate} />
       </div>
       <div className="mt-3 h-px bg-hairline" />
-      <InlineInput value={note.meta.documentType} onChange={(v) => mutate((d) => void (d.meta.documentType = v))} className="mt-5 text-[9.5px] font-bold uppercase tracking-[0.2em] text-accent" ariaLabel="Document type" />
+      <InlineInput value={note.meta.documentType} onChange={(v) => mutate((d) => void (d.meta.documentType = v))} className="mt-5 text-[9.5px] font-bold uppercase tracking-[0.2em] text-teal-ink" ariaLabel="Document type" />
       <Company note={note} mutate={mutate} className="mt-1 font-serif text-[34px] font-bold leading-tight text-heading" />
       <Headline note={note} mutate={mutate} className="mt-1 text-[15px] leading-snug text-muted" />
       <div className="mt-3 flex flex-wrap gap-2">
         {b.facts.rating ? (
-          <span className="rounded-full bg-teal-tint px-3 py-1 text-[11px] font-bold text-primary">
+          <span className="rounded-full bg-teal-tint px-3 py-1 text-[11px] font-bold text-teal-ink">
             Rating: {b.facts.rating}
             {b.facts.outlook ? ` (${b.facts.outlook})` : ""}
           </span>
@@ -274,7 +274,7 @@ function ReportCover({ note, mutate, b }: { note: RatingNote; mutate: Mutate; b:
                 <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted">{m.l}</div>
                 <div className="mt-1 text-[22px] font-bold text-heading">{m.v}</div>
                 {m.p ? (
-                  <span className={`mt-1 inline-block rounded-full border px-2 py-0.5 text-[10px] font-bold ${m.warn ? "border-amber text-amber" : "border-accent text-primary"}`}>{m.p}</span>
+                  <span className={`mt-1 inline-block rounded-full border px-2 py-0.5 text-[10px] font-bold ${m.warn ? "border-amber text-amber" : "border-accent text-teal-ink"}`}>{m.p}</span>
                 ) : null}
               </div>
             ))}

@@ -1,6 +1,7 @@
 import { deriveKeyFacts, findColumn, parseNumber, sumColumn } from "@/lib/note/derive";
 import type { Issue, NoteTable, RatingNote } from "@/lib/note/schema";
 import { checkStyle } from "@/lib/note/style";
+import { findRatings } from "@/lib/note/rating";
 
 /**
  * Anti-hallucination and consistency checks. All checks are deterministic:
@@ -13,7 +14,6 @@ import { checkStyle } from "@/lib/note/style";
 
 // Numbers may carry a unit suffix ("1.4x", "12%"), but not other letters ("FY26", "Q1").
 const NUM_RE = /(?<![\w.])-?\d[\d,]*(?:\.\d+)?(?![\dA-WYZa-wyz])/g;
-const RATING_SYMBOL_RE = /\bACER\s+(?:A1\+?|A[1-4]\+?|AAA|AA[+-]?|A[+-]?|BBB[+-]?|BB[+-]?|B[+-]?|C|D)(?![+\w-])/g;
 
 /** Canonical form for numbers: strip grouping, trailing zeros ("12.50" == "12.5"). */
 export function canonicalNumber(raw: string): string {
@@ -41,7 +41,6 @@ export function sourceNumberSet(text: string): Set<string> {
   return out;
 }
 
-const normalise = (s: string) => s.replace(/\s+/g, " ").toUpperCase();
 
 /**
  * Every figure is checked, including small counts and years: "25 years of experience" or
@@ -78,7 +77,8 @@ export function checkTraceability(note: RatingNote, sourceText: string): Issue[]
   if (!sourceText.trim()) return [];
   const issues: Issue[] = [];
   const sourceNumbers = sourceNumberSet(sourceText);
-  const sourceUpper = normalise(sourceText);
+  // Ratings must match a source symbol exactly, notch included ("ACER AA" is not "ACER AA+").
+  const sourceRatings = new Set(findRatings(sourceText));
   const reported = new Set<string>();
 
   for (const { text, blockId } of noteTexts(note)) {
@@ -95,15 +95,15 @@ export function checkTraceability(note: RatingNote, sourceText: string): Issue[]
         blockId,
       });
     }
-    for (const m of text.matchAll(RATING_SYMBOL_RE)) {
-      if (sourceUpper.includes(normalise(m[0]))) continue;
-      const key = `${m[0]}|${blockId ?? ""}`;
+    for (const rating of findRatings(text)) {
+      if (sourceRatings.has(rating)) continue;
+      const key = `${rating}|${blockId ?? ""}`;
       if (reported.has(key)) continue;
       reported.add(key);
       issues.push({
         severity: "error",
         code: "untraced-rating",
-        message: `Rating "${m[0]}" is not in the source. Ratings are never changed automatically; it needs analyst confirmation.`,
+        message: `Rating "${rating}" is not in the source. Ratings are never changed automatically; it needs analyst confirmation.`,
         blockId,
       });
     }
@@ -271,9 +271,9 @@ export function checkCompleteness(note: RatingNote): Issue[] {
   if (note.instruments) {
     const ratingCol = findColumn(note.instruments, /rating/i);
     const symbols = new Set(
-      note.instruments.rows.map((r) => (r[ratingCol] ?? "").match(RATING_SYMBOL_RE)?.[0]).filter(Boolean) as string[]
+      note.instruments.rows.flatMap((r) => findRatings(r[ratingCol] ?? "").slice(0, 1))
     );
-    const headlineSymbol = note.meta.headline.match(RATING_SYMBOL_RE)?.[0];
+    const headlineSymbol = findRatings(note.meta.headline)[0];
     if (headlineSymbol && symbols.size && !symbols.has(headlineSymbol))
       issues.push({ severity: "error", code: "rating-conflict", message: `The headline says ${headlineSymbol} but the instruments table says ${[...symbols].join(", ")}.` });
   }

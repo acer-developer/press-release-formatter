@@ -1,3 +1,4 @@
+import { normaliseRatingText } from "./rating";
 import type { Issue, NoteBlock, NoteTable, RatingNote } from "./schema";
 
 /**
@@ -5,17 +6,38 @@ import type { Issue, NoteBlock, NoteTable, RatingNote } from "./schema";
  * no em/en dashes and none of the stock phrases that make text read as machine-written.
  */
 
-/** Replaces em and en dashes: ranges become hyphens ("FY25-FY26"), asides become commas. */
+const DASH = "[\u2013\u2014]";
+/** Tokens that make a dash a range: numbers, years, FY25, Q1FY27, H1, March 2026 style months. */
+const RANGE_TOKEN = /^(?:FY|Q\d|H\d|9M|6M)?\d|^(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*$/i;
+
+/**
+ * Replaces em and en dashes with house-style punctuation without changing meaning:
+ *  - a rating notch typed as a dash stays a notch ("ACER BBB\u2013" becomes "ACER BBB-")
+ *  - ranges become hyphens ("FY25 \u2013 FY26" and "12\u201315%" become "FY25-FY26", "12-15%")
+ *  - unspaced compounds become hyphens ("Delhi\u2013Mumbai")
+ *  - a dash standing alone (a nil or not-applicable cell) becomes a hyphen
+ *  - a spaced aside becomes a comma; a trailing dash is dropped
+ */
 export function cleanDashes(s: string): string {
-  return s
-    .replace(/(\w)\s*[–—]\s*(\w)/g, (m, a: string, b: string) => {
-      const spaced = /\s[–—]\s/.test(m);
-      const range = /\d/.test(a) && /\d|FY|Q/i.test(b);
-      return spaced && !range ? `${a}, ${b}` : `${a}-${b}`;
-    })
-    .replace(/\s*[–—]\s*/g, ", ")
-    .replace(/,\s*,/g, ",")
-    .replace(/…/g, "...");
+  let t = normaliseRatingText(s);
+  if (new RegExp(`^\\s*${DASH}\\s*$`).test(t)) return "-";
+  // Spacing is matched within a line only, so line breaks survive. Repeated until stable so
+  // runs of dashes ("a \u2013 \u2013 b") are all handled.
+  const between = new RegExp(`(\\S+?)([ \\t]*)${DASH}+([ \\t]*)(?=(\\S+))`, "g");
+  for (let prev = ""; prev !== t; ) {
+    prev = t;
+    t = t.replace(between, (_m, a: string, sp1: string, sp2: string, b: string) => {
+      const spaced = !!(sp1 || sp2);
+      const range = RANGE_TOKEN.test(a.replace(/^[(]/, "")) && RANGE_TOKEN.test(b.replace(/^[(]/, ""));
+      return range || !spaced ? `${a}-` : `${a}, `;
+    });
+  }
+  return t
+    .replace(new RegExp(`[ \\t]*${DASH}+[ \\t]*$`, "gm"), "")
+    .replace(new RegExp(`^[ \\t]*${DASH}+[ \\t]*`, "gm"), "")
+    .replace(new RegExp(DASH, "g"), "-")
+    .replace(/,(?:[ \t]*,)+/g, ",")
+    .replace(/\u2026/g, "...");
 }
 
 /** Phrases that read as AI-generated filler in a credit rating note. Matched case-insensitively. */

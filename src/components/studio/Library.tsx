@@ -3,8 +3,10 @@
 import { Loader2, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import type { RatingNote } from "@/lib/note/schema";
+import { RatingNoteSchema, type RatingNote } from "@/lib/note/schema";
 import { deleteNote, getNote, listNotes } from "@/lib/store";
+
+import { useEscape } from "./fields";
 
 interface NoteRow {
   id: string;
@@ -22,6 +24,7 @@ interface Loaded {
 }
 
 export function Library({ onClose, onOpen }: { onClose: () => void; onOpen: (n: Loaded) => void }) {
+  useEscape(onClose);
   const [rows, setRows] = useState<NoteRow[] | null>(null);
   const [versions, setVersions] = useState<Record<string, { version: number; createdAt: string | number }[]>>({});
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +42,10 @@ export function Library({ onClose, onOpen }: { onClose: () => void; onOpen: (n: 
     const stored = await getNote(id);
     const v = stored?.versions.find((x) => x.version === version) ?? stored?.versions.at(-1);
     if (!stored || !v) return setError("Could not open note");
-    onOpen({ id, version: v.version, note: v.note, sourceText: v.sourceText, engine: v.engine });
+    // Saved notes may come from an older version of the app: validate and normalise them.
+    const parsed = RatingNoteSchema.safeParse(v.note);
+    if (!parsed.success) return setError("This saved note could not be read. It may come from an incompatible version.");
+    onOpen({ id, version: v.version, note: parsed.data, sourceText: v.sourceText, engine: v.engine });
   };
 
   const showVersions = async (id: string) => {
@@ -49,7 +55,7 @@ export function Library({ onClose, onOpen }: { onClose: () => void; onOpen: (n: 
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/30 p-10" onClick={onClose}>
-      <div className="w-full max-w-2xl rounded-lg bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" className="w-full max-w-2xl rounded-lg bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-hairline px-5 py-3">
           <div className="font-serif text-[18px] font-bold text-heading">Saved notes <span className="font-sans text-[11px] font-normal text-muted">(this browser)</span></div>
           <button type="button" onClick={onClose} aria-label="Close" className="rounded p-1 text-muted hover:bg-mist">
@@ -73,7 +79,7 @@ export function Library({ onClose, onOpen }: { onClose: () => void; onOpen: (n: 
                     <div className="truncate text-[12px] text-muted">{r.headline}</div>
                     <div className="mt-0.5 text-[11px] text-muted">Updated {new Date(r.updatedAt).toLocaleString()}</div>
                   </button>
-                  <button type="button" onClick={() => showVersions(r.id)} className="text-[11.5px] text-primary hover:underline">
+                  <button type="button" onClick={() => showVersions(r.id)} className="text-[11.5px] text-teal-ink hover:underline">
                     Versions
                   </button>
                   <button

@@ -1,3 +1,4 @@
+import { firstRating } from "./rating";
 import type { NoteTable, RatingNote } from "./schema";
 
 /**
@@ -13,7 +14,6 @@ export interface KeyFacts {
   amountUnit: string;
 }
 
-const RATING_RE = /\bACER\s+(?:A1\+?|A[1-4]\+?|AAA|AA[+-]?|A[+-]?|BBB[+-]?|BB[+-]?|B[+-]?|C|D)(?:\s*\(CE\))?(?:\s*\(SO\))?/;
 const OUTLOOK_RE = /\b(Stable|Positive|Negative|Developing)\b/;
 const ACTION_RE = /\b(Reaffirm(?:ed|s)?|Assign(?:ed|s)?|Upgrade[ds]?|Downgrade[ds]?|Withdr(?:awn|aws)|Placed on Watch|Revise[ds]?|Migrated)\b/i;
 
@@ -28,9 +28,13 @@ const normaliseAction = (raw: string) => {
   return raw[0].toUpperCase() + raw.slice(1).toLowerCase();
 };
 
+/** First number in a cell; accounting negatives "(12.5)" and minus signs are read as negative. */
 export const parseNumber = (s: string): number | null => {
-  const m = s.replace(/,/g, "").match(/-?\d+(?:\.\d+)?/);
-  return m ? Number(m[0]) : null;
+  const t = s.replace(/,/g, "").replace(/[\u2212\u2013]/g, "-");
+  const m = t.match(/(\()?\s*(-?\d+(?:\.\d+)?)\s*(\))?/);
+  if (!m) return null;
+  const n = Number(m[2]);
+  return m[1] && m[3] ? -Math.abs(n) : n;
 };
 
 export function findColumn(table: NoteTable, re: RegExp) {
@@ -47,7 +51,7 @@ export function deriveKeyFacts(note: RatingNote): KeyFacts {
     haystacks.push(...instr.rows.map((r) => r.join(" ")));
   }
   for (const h of haystacks) {
-    if (!facts.rating) facts.rating = h.match(RATING_RE)?.[0].replace(/\s+/g, " ") ?? "";
+    if (!facts.rating) facts.rating = firstRating(h);
     if (!facts.outlook) facts.outlook = h.match(OUTLOOK_RE)?.[1] ?? "";
     if (!facts.action) {
       const a = h.match(ACTION_RE)?.[1];

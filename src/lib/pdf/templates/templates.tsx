@@ -5,7 +5,7 @@ import type { Style } from "@formepdf/react";
 import { PdfGraph } from "@/components/pdf/graph/graph";
 import { PdfcnThemeProvider } from "@/components/pdf/theme-provider";
 import { acerTheme, brand } from "@/lib/pdf-themes/acer";
-import { showsDate } from "@/lib/note/derive";
+import { parseNumber, showsDate } from "@/lib/note/derive";
 import type { RatingNote } from "@/lib/note/schema";
 
 import {
@@ -153,7 +153,7 @@ function BoardroomPages({ note, assets }: { note: RatingNote; assets: TemplateAs
 
         <View style={{ flexDirection: "row", paddingHorizontal: MARGIN_X, paddingTop: 24, gap: 22 }}>
           <View style={{ flex: 62 }}>
-            <Text style={{ ...caps, color: brand.accent, marginBottom: 4 }}>Executive summary</Text>
+            <Text style={{ ...caps, color: brand.tealInk, marginBottom: 4 }}>Executive summary</Text>
             <Text style={{ ...serif, fontSize: 16, marginBottom: 12 }}>What drives the rating</Text>
             {b.keyMessages.map((m, i) => (
               <View key={i} style={{ flexDirection: "row", marginBottom: 11 }}>
@@ -205,24 +205,24 @@ function BoardroomPages({ note, assets }: { note: RatingNote; assets: TemplateAs
           <View style={{ paddingHorizontal: MARGIN_X, paddingTop: 18 }}>
             {b.drivers.length ? (
               <>
-                <Text style={{ ...caps, color: brand.accent }}>Key rating drivers</Text>
+                <Text style={{ ...caps, color: brand.tealInk }}>Key rating drivers</Text>
                 <Text style={{ ...serif, fontSize: 18, marginTop: 3, marginBottom: 12 }}>{balanceLine(b)}</Text>
                 <View style={{ flexDirection: "row", gap: 16 }}>
-                  <Column title="Credit strengths" items={b.strengths} color={brand.accent} />
+                  <Column title="Credit strengths" items={b.strengths} color={brand.deep} />
                   <Column title="Credit weaknesses" items={b.weaknesses} color={brand.amber} />
                 </View>
               </>
             ) : null}
             {b.kpis.length ? (
               <>
-                <Text style={{ ...caps, color: brand.accent, marginTop: 10 }}>Financial profile</Text>
+                <Text style={{ ...caps, color: brand.tealInk, marginTop: 10 }}>Financial profile</Text>
                 <Text style={{ ...serif, fontSize: 18, marginTop: 3, marginBottom: 10 }}>Reported performance at a glance</Text>
                 <View style={{ flexDirection: "row", gap: 8 }}>
                   {b.kpis.map((k) => (
                     <View key={k.label} style={{ flex: 1, borderTopWidth: 2, borderTopColor: brand.deep, backgroundColor: brand.mist, padding: 9 }}>
                       <Text style={{ ...caps, fontSize: 5.8, color: brand.slate }}>{`${k.label}, ${k.period}`}</Text>
                       <Text style={{ ...serif, fontSize: 19, marginTop: 4 }}>{k.value}</Text>
-                      {k.change ? <Text style={{ fontFamily: F.body, fontSize: 7, fontWeight: 700, marginTop: 2, color: k.good ? brand.accent : brand.amber }}>{k.change}</Text> : null}
+                      {k.change ? <Text style={{ fontFamily: F.body, fontSize: 7, fontWeight: 700, marginTop: 2, color: k.good ? brand.tealInk : brand.amber }}>{k.change}</Text> : null}
                     </View>
                   ))}
                 </View>
@@ -274,7 +274,11 @@ function ScorecardPages({ note, assets }: { note: RatingNote; assets: TemplateAs
     return (
       <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" }}>
         {rows.map((r) => {
-          const data = b.fin!.periods.map((p, i) => ({ label: p, value: Number.parseFloat((r[i + 1] ?? "").replace(/[,%x]/g, "")) || 0, color: /Q\d/i.test(p) ? brand.light : brand.deep }));
+          // Periods without a figure ("NA", "-") are left out rather than drawn as zero.
+          const data = b.fin!.periods
+            .map((p, i) => ({ label: p, value: parseNumber(r[i + 1] ?? ""), color: /Q\d/i.test(p) ? brand.chart2 : brand.deep }))
+            .filter((d): d is { label: string; value: number; color: string } => d.value !== null);
+          if (data.length < 2) return null;
           return (
             <View key={r[0]} style={{ width: "48.5%", marginBottom: 9, borderWidth: 0.5, borderColor: brand.hairline, padding: 8 }} wrap={false}>
               <Text style={{ fontFamily: F.body, fontSize: 7.8, fontWeight: 700, color: brand.heading, marginBottom: 4 }}>{r[0]}</Text>
@@ -313,11 +317,11 @@ function ScorecardPages({ note, assets }: { note: RatingNote; assets: TemplateAs
             ) : null}
           </View>
           <View style={{ flex: 1, paddingLeft: 30, paddingRight: 38, paddingTop: 30 }}>
-            <Text style={{ ...caps, color: brand.accent, marginBottom: 8 }}>{`${note.meta.documentType || "Press Release"}  |  Credit rating`}</Text>
+            <Text style={{ ...caps, color: brand.tealInk, marginBottom: 8 }}>{`${note.meta.documentType || "Press Release"}  |  Credit rating`}</Text>
             <Text style={{ ...serif, fontSize: 26, lineHeight: 1.12 }}>{note.meta.companyName}</Text>
             <View style={{ height: 2.5, width: 46, backgroundColor: brand.deep, marginVertical: 12 }} />
             {note.meta.headline ? <Text style={{ fontFamily: F.body, fontSize: 12.5, fontWeight: 500, color: brand.heading, lineHeight: 1.4 }}>{note.meta.headline}</Text> : null}
-            {b.keyMessages.length ? <Text style={{ ...caps, color: brand.accent, marginTop: 20, marginBottom: 6 }}>The rating in brief</Text> : null}
+            {b.keyMessages.length ? <Text style={{ ...caps, color: brand.tealInk, marginTop: 20, marginBottom: 6 }}>The rating in brief</Text> : null}
             {b.keyMessages.map((m, i) => (
               <View key={i} style={{ marginBottom: 8, paddingLeft: 10, borderLeftWidth: 2, borderLeftColor: i === 0 ? brand.deep : brand.light }}>
                 <Text style={bodyText}>{m}</Text>
@@ -370,7 +374,7 @@ function ScorecardPages({ note, assets }: { note: RatingNote; assets: TemplateAs
                     <View key={k.label} style={{ flex: 1, paddingVertical: 9, paddingLeft: i ? 10 : 0, borderLeftWidth: i ? 0.5 : 0, borderLeftColor: brand.hairline }}>
                       <Text style={{ ...caps, fontSize: 5.8, color: brand.slate }}>{`${k.label}, ${k.period}`}</Text>
                       <Text style={{ ...serif, fontSize: 18, marginTop: 3 }}>{k.value}</Text>
-                      {k.change ? <Text style={{ fontFamily: F.body, fontSize: 7, fontWeight: 700, color: k.good ? brand.accent : brand.amber }}>{k.change}</Text> : null}
+                      {k.change ? <Text style={{ fontFamily: F.body, fontSize: 7, fontWeight: 700, color: k.good ? brand.tealInk : brand.amber }}>{k.change}</Text> : null}
                     </View>
                   ))}
                 </View>
@@ -445,13 +449,13 @@ function ReportPages({ note, assets }: { note: RatingNote; assets: TemplateAsset
           {showsDate(note) ? <Text style={{ fontFamily: F.body, fontSize: 8, color: brand.slate }}>{note.meta.date}</Text> : null}
         </View>
         <View style={{ height: 0.6, backgroundColor: brand.hairline, marginBottom: 16 }} />
-        <Text style={{ ...caps, color: brand.accent, marginBottom: 6 }}>{`${note.meta.documentType || "Press Release"}  |  Credit rating`}</Text>
+        <Text style={{ ...caps, color: brand.tealInk, marginBottom: 6 }}>{`${note.meta.documentType || "Press Release"}  |  Credit rating`}</Text>
         <Text style={{ ...serif, fontSize: 26, lineHeight: 1.12 }}>{note.meta.companyName}</Text>
         {note.meta.headline ? <Text style={{ fontFamily: F.body, fontSize: 11.5, color: brand.slate, marginTop: 6, lineHeight: 1.4 }}>{note.meta.headline}</Text> : null}
         <View style={{ flexDirection: "row", gap: 6, marginTop: 10, marginBottom: 16 }}>
           {f.rating ? (
             <View style={{ backgroundColor: brand.tealTint, borderRadius: 9, paddingVertical: 2.5, paddingHorizontal: 8 }}>
-              <Text style={{ fontFamily: F.body, fontSize: 7, fontWeight: 700, color: brand.primary }}>{`Rating: ${f.rating}${f.outlook ? ` (${f.outlook})` : ""}`}</Text>
+              <Text style={{ fontFamily: F.body, fontSize: 7, fontWeight: 700, color: brand.tealInk }}>{`Rating: ${f.rating}${f.outlook ? ` (${f.outlook})` : ""}`}</Text>
             </View>
           ) : null}
           {b.liquidity ? (

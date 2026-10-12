@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 /** Textarea that grows with its content, styled to look like print until focused. */
 export function AutoText({
@@ -87,4 +87,13 @@ export function IconButton({
       {children}
     </button>
   );
+}
+
+/** Closes a dialog on Escape. */
+export function useEscape(onClose: () => void) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
 }

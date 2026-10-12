@@ -26,10 +26,11 @@ import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } f
 
 import { isAvailable, PROVIDERS, type AiSettings } from "@/lib/ai/providers";
 import type { EngineChoice } from "@/lib/generate";
-import { produce } from "@/lib/note/ops";
+import { edit, initHistory, redo as redoHistory, replace, undo as undoHistory, type History } from "@/lib/note/history";
 import { loadPdfJs } from "@/lib/pdfjs-client";
 import { loadAiSettings, saveAiSettings } from "@/lib/settings";
 import { saveNote } from "@/lib/store";
+import { MAX_UPLOAD_BYTES } from "@/lib/limits";
 import { TEMPLATES } from "@/lib/pdf/templates/templates";
 import { northwindSample } from "@/lib/note/samples/northwind";
 import { emptyNote, type Issue, type RatingNote } from "@/lib/note/schema";
@@ -43,10 +44,15 @@ import { SettingsDialog } from "./SettingsDialog";
 
 const ACCEPT = ".pdf,.docx,.txt,.md,.markdown,.json,.csv";
 
+const pickOptions = (n: RatingNote) => ({
+  charts: n.options?.charts ?? false,
+  dateMode: n.options?.dateMode ?? "date",
+  template: n.options?.template ?? "boardroom",
+});
+
 export function Studio() {
-  const [note, setNote] = useState<RatingNote>(() => emptyNote());
-  const [past, setPast] = useState<RatingNote[]>([]);
-  const [future, setFuture] = useState<RatingNote[]>([]);
+  const [history, setHistory] = useState<History>(() => initHistory(emptyNote()));
+  const note = history.present;
   const lastPush = useRef(0);
 
   const [sourceText, setSourceText] = useState("");
@@ -85,43 +91,17 @@ export function Studio() {
 
   /** Single write path for edits, with coalesced undo history while typing. */
   const mutate = useCallback((fn: (draft: RatingNote) => void) => {
-    setNote((prev) => {
-      const now = Date.now();
-      if (now - lastPush.current > 700) {
-        setPast((p) => [...p.slice(-80), prev]);
-        setFuture([]);
-      }
-      lastPush.current = now;
-      return produce(prev, fn);
-    });
+    // The checkpoint decision is made once, outside the state updater, so the updater stays pure.
+    const now = Date.now();
+    const checkpoint = now - lastPush.current > 700;
+    lastPush.current = now;
+    setHistory((h) => edit(h, fn, checkpoint));
     setDirty(true);
   }, []);
 
-  const replaceNote = (next: RatingNote) => {
-    setPast((p) => [...p.slice(-80), note]);
-    setFuture([]);
-    setNote(next);
-  };
-
-  const undo = useCallback(() => {
-    setPast((p) => {
-      if (!p.length) return p;
-      const prev = p[p.length - 1];
-      setFuture((f) => [note, ...f]);
-      setNote(prev);
-      return p.slice(0, -1);
-    });
-  }, [note]);
-
-  const redo = useCallback(() => {
-    setFuture((f) => {
-      if (!f.length) return f;
-      const [next, ...rest] = f;
-      setPast((p) => [...p, note]);
-      setNote(next);
-      return rest;
-    });
-  }, [note]);
+  const replaceNote = useCallback((next: RatingNote) => setHistory((h) => replace(h, next)), []);
+  const undo = useCallback(() => setHistory(undoHistory), []);
+  const redo = useCallback(() => setHistory(redoHistory), []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -167,7 +147,7 @@ export function Studio() {
     let data: Uint8Array | undefined;
     if (inputMode === "document") {
       if (!file) return setError("Choose a document first.");
-      if (file.size > 15 * 1024 * 1024) return setError("File is larger than 15 MB.");
+      if (file.size > MAX_UPLOAD_BYTES) return setError(`File is larger than ${MAX_UPLOAD_BYTES / 1024 / 1024} MB.`);
       data = new Uint8Array(await file.arrayBuffer());
     } else if (!rawText.trim()) {
       return setError("Paste or type the source material first.");
@@ -186,8 +166,11 @@ export function Studio() {
         ai,
         pdfjs: await loadPdfJs(),
       });
-      // Presentation choices made before generating (charts, date, template) carry over to the new note.
-      replaceNote({ ...result.note, options: { charts: note.options?.charts ?? false, dateMode: note.options?.dateMode ?? "date", template: note.options?.template ?? "boardroom" } });
+      // Presentation choices made before generating (charts, date, template) carry over to the new
+      // note, read from the live state after the await. An imported note keeps its own choices.
+      setHistory((h) =>
+        replace(h, result.engine === "import" ? result.note : { ...result.note, options: { ...result.note.options, ...pickOptions(h.present) } })
+      );
       setSourceText(result.sourceText);
       setServerIssues(result.issues);
       setEngineUsed(result.engine);
@@ -230,7 +213,8 @@ export function Studio() {
       a.href = URL.createObjectURL(blob);
       a.download = `${(note.meta.companyName || "rating-note").replace(/[^\w]+/g, "-")}-press-release.pdf`;
       a.click();
-      URL.revokeObjectURL(a.href);
+      // Some browsers start the download asynchronously; revoking at once can cancel it.
+      setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Render failed");
     } finally {
@@ -244,7 +228,7 @@ export function Studio() {
     a.href = URL.createObjectURL(blob);
     a.download = `${(note.meta.companyName || "rating-note").replace(/[^\w]+/g, "-")}.json`;
     a.click();
-    URL.revokeObjectURL(a.href);
+    setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
   }
 
   const jumpTo = (id?: string) => {
@@ -273,10 +257,10 @@ export function Studio() {
           </div>
         </div>
         <div className="ml-auto flex items-center gap-1.5">
-          <ToolbarButton title="Undo (Ctrl+Z)" onClick={undo} disabled={!past.length}>
+          <ToolbarButton title="Undo (Ctrl+Z)" onClick={undo} disabled={!history.past.length}>
             <Undo2 size={15} />
           </ToolbarButton>
-          <ToolbarButton title="Redo (Ctrl+Shift+Z)" onClick={redo} disabled={!future.length}>
+          <ToolbarButton title="Redo (Ctrl+Shift+Z)" onClick={redo} disabled={!history.future.length}>
             <Redo2 size={15} />
           </ToolbarButton>
           <div className="mx-1 h-6 w-px bg-hairline" />
@@ -296,7 +280,7 @@ export function Studio() {
           <button
             type="button"
             onClick={() => mutate((d) => void (d.options = { ...d.options, charts: !charts }))}
-            className={`inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[12px] font-medium transition ${charts ? "border-accent bg-tint text-primary" : "border-hairline text-muted hover:text-heading"}`}
+            className={`inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[12px] font-medium transition ${charts ? "border-accent bg-tint text-teal-ink" : "border-hairline text-muted hover:text-heading"}`}
             title="Charts are added only when this is on"
           >
             <BarChart3 size={14} /> Charts {charts ? "on" : "off"}
@@ -316,7 +300,7 @@ export function Studio() {
           <button
             type="button"
             onClick={exportPdf}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md bg-deep px-3 text-[12px] font-semibold text-white transition hover:bg-primary"
+            className="inline-flex h-8 items-center gap-1.5 rounded-md bg-deep px-3 text-[12px] font-semibold text-white transition hover:bg-teal-ink"
           >
             <Download size={14} /> Export PDF
           </button>
@@ -478,7 +462,7 @@ export function Studio() {
                   type="button"
                   onClick={generate}
                   disabled={!!busy}
-                  className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-deep text-[13px] font-semibold text-white transition hover:bg-primary disabled:opacity-60"
+                  className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-deep text-[13px] font-semibold text-white transition hover:bg-teal-ink disabled:opacity-60"
                 >
                   {busy ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />} Generate note
                 </button>
@@ -488,7 +472,7 @@ export function Studio() {
                 <div className="flex items-center justify-between border-t border-hairline pt-3 text-[11.5px]">
                   <button
                     type="button"
-                    className="text-primary hover:underline"
+                    className="text-teal-ink hover:underline"
                     onClick={() => {
                       replaceNote(northwindSample);
                       setSourceText("");
@@ -652,7 +636,7 @@ function ReviewPanel({
         )}
       </div>
       {issues.length === 0 ? (
-        <div className="flex items-center gap-2 rounded-md border border-hairline p-3 text-[12.5px] text-primary">
+        <div className="flex items-center gap-2 rounded-md border border-hairline p-3 text-[12.5px] text-teal-ink">
           <CheckCircle2 size={15} /> No issues found.
         </div>
       ) : (
