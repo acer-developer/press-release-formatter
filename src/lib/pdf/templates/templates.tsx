@@ -133,7 +133,7 @@ function BoardroomPages({ note, assets }: { note: RatingNote; assets: TemplateAs
           <Text style={{ ...caps, color: brand.slate }}>{`${note.meta.documentType || "Press Release"}${showsDate(note) ? `  |  ${note.meta.date}` : ""}`}</Text>
         </View>
         <View style={{ backgroundColor: brand.deep, paddingHorizontal: MARGIN_X, paddingTop: 26 }}>
-          <Text style={{ ...caps, color: brand.lime, marginBottom: 10 }}>Credit rating action</Text>
+          <Text style={{ ...caps, color: brand.bannerLabel, marginBottom: 10 }}>Credit rating action</Text>
           <Text style={{ ...serif, color: "#ffffff", fontSize: 30, lineHeight: 1.1 }}>{note.meta.companyName}</Text>
           {note.meta.headline ? <Text style={{ fontFamily: F.body, fontSize: 12, color: brand.bannerText, marginTop: 8, lineHeight: 1.4, maxWidth: 440 }}>{note.meta.headline}</Text> : null}
           {tiles.length ? (
@@ -450,7 +450,7 @@ function ReportPages({ note, assets }: { note: RatingNote; assets: TemplateAsset
         {note.meta.headline ? <Text style={{ fontFamily: F.body, fontSize: 11.5, color: brand.slate, marginTop: 6, lineHeight: 1.4 }}>{note.meta.headline}</Text> : null}
         <View style={{ flexDirection: "row", gap: 6, marginTop: 10, marginBottom: 16 }}>
           {f.rating ? (
-            <View style={{ backgroundColor: brand.greenTint, borderRadius: 9, paddingVertical: 2.5, paddingHorizontal: 8 }}>
+            <View style={{ backgroundColor: brand.tealTint, borderRadius: 9, paddingVertical: 2.5, paddingHorizontal: 8 }}>
               <Text style={{ fontFamily: F.body, fontSize: 7, fontWeight: 700, color: brand.primary }}>{`Rating: ${f.rating}${f.outlook ? ` (${f.outlook})` : ""}`}</Text>
             </View>
           ) : null}

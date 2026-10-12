@@ -15,7 +15,7 @@ Everything runs in the browser. Documents are not uploaded to any server, notes 
 5. **Print view.** See the exact PDF and compare the three templates side by side. Switching templates is instant and costs nothing.
 6. **Export PDF** or **Save** a version (kept in this browser).
 
-Options: **Colour** switches between ACER dark green and ACER teal (#3AAFA9 / #3AA4A9) for any template. **Charts** are off unless switched on. **Date** can be printed (with a picker that formats it as "24th August 2026") or left off.
+Options: **Charts** are off unless switched on. **Date** can be printed (with a picker that formats it as "24th August 2026") or left off.
 
 ## Templates
 
@@ -25,7 +25,7 @@ Options: **Colour** switches between ACER dark green and ACER teal (#3AAFA9 / #3
 | B | Scorecard | Key-facts sidebar with a strength/weakness balance bar, a driver scorecard table, upgrade and downgrade triggers |
 | C | Report | Built on pdfcn's report style: rounded cards, change badges, highlights and risks |
 
-All three carry the full note after the briefing pages: every section, table and annexure, in ACER's palette (black text with dark green or teal accents, switchable) and typefaces (Caladea headings, Satoshi body). Headings stay with their text and table headers repeat on every page.
+All three carry the full note after the briefing pages: every section, table and annexure, in ACER teal (black text, teal #3AAFA9 / #3AA4A9 accents) and typefaces (Caladea headings, Satoshi body). Headings stay with their text and table headers repeat on every page.
 
 ## No hallucination: how it is enforced
 

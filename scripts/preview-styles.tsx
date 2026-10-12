@@ -148,7 +148,7 @@ function BoardroomCover() {
       </View>
       {/* Hero band */}
       <View style={{ backgroundColor: brand.deep, paddingHorizontal: 40, paddingTop: 26, paddingBottom: 0 }}>
-        <Text style={{ ...caps, color: brand.lime, marginBottom: 10 }}>Credit rating action</Text>
+        <Text style={{ ...caps, color: brand.bannerLabel, marginBottom: 10 }}>Credit rating action</Text>
         <Text style={{ ...serif, color: "#ffffff", fontSize: 30, lineHeight: 1.1 }}>{note.meta.companyName}</Text>
         <Text style={{ fontSize: 12, color: "#D6E6E0", marginTop: 8, lineHeight: 1.4, maxWidth: 440 }}>{note.meta.headline}</Text>
         <View style={{ flexDirection: "row", marginTop: 22, borderTopWidth: 0.6, borderTopColor: "#4F7A6E" }}>
@@ -304,7 +304,7 @@ function ScorecardCover() {
   return (
     <Page size="A4" margin={0} style={{ fontFamily: "Satoshi", color: brand.ink }}>
       <View style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: side, backgroundColor: brand.mist }} />
-      <View style={{ position: "absolute", left: side, top: 0, bottom: 0, width: 3, background: "linear-gradient(180deg, #8EC641 0%, #54B69C 60%, #43927D 100%)" } as Style} />
+      <View style={{ position: "absolute", left: side, top: 0, bottom: 0, width: 3, background: brand.gradientV } as Style} />
       <View style={{ flexDirection: "row" }}>
         {/* Sidebar */}
         <View style={{ width: side, paddingHorizontal: 20, paddingTop: 26 }}>
@@ -393,7 +393,7 @@ function ScorecardInside() {
           <View key={d.title} style={{ flexDirection: "row", paddingVertical: 6, borderBottomWidth: 0.4, borderBottomColor: brand.hairline }} wrap={false}>
             <Text style={{ fontSize: 8.2, fontWeight: 700, color: brand.heading, width: "30%", paddingRight: 8, lineHeight: 1.35 }}>{d.title}</Text>
             <View style={{ width: "14%" }}>
-              <View style={{ alignSelf: "flex-start", backgroundColor: d.tone === "s" ? brand.greenTint : brand.amberTint, paddingVertical: 2, paddingHorizontal: 5 }}>
+              <View style={{ alignSelf: "flex-start", backgroundColor: d.tone === "s" ? brand.tealTint : brand.amberTint, paddingVertical: 2, paddingHorizontal: 5 }}>
                 <Text style={{ ...caps, fontSize: 5.8, color: d.tone === "s" ? brand.primary : brand.amber }}>{d.tone === "s" ? "Strength" : "Weakness"}</Text>
               </View>
             </View>
@@ -468,7 +468,7 @@ function ReportCover() {
       <Text style={{ ...serif, fontSize: 26, lineHeight: 1.12 }}>{note.meta.companyName}</Text>
       <Text style={{ fontSize: 11.5, color: brand.slate, marginTop: 6, lineHeight: 1.4 }}>{note.meta.headline}</Text>
       <View style={{ flexDirection: "row", gap: 6, marginTop: 10, marginBottom: 16 }}>
-        <View style={{ backgroundColor: brand.greenTint, borderRadius: 9, paddingVertical: 2.5, paddingHorizontal: 8 }}>
+        <View style={{ backgroundColor: brand.tealTint, borderRadius: 9, paddingVertical: 2.5, paddingHorizontal: 8 }}>
           <Text style={{ fontSize: 7, fontWeight: 700, color: brand.primary }}>{`Rating: ${facts.rating} (${facts.outlook})`}</Text>
         </View>
         {liquidityLevel ? (

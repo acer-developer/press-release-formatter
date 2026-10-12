@@ -66,7 +66,7 @@ function BlockBody({ block, onChange, exhibit, tone, template, sensitivity }: { 
             value={block.text}
             onChange={(text) => onChange({ ...block, text })}
             placeholder="Subheading"
-            className={pill ? `rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${/strength|positive/i.test(block.text) ? "bg-green-tint text-primary" : "bg-[#FBF3E4] text-amber"}` : "text-[13.5px] font-semibold text-heading"}
+            className={pill ? `rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${/strength|positive/i.test(block.text) ? "bg-teal-tint text-primary" : "bg-[#FBF3E4] text-amber"}` : "text-[13.5px] font-semibold text-heading"}
           />
         </div>
       );
@@ -81,7 +81,7 @@ function BlockBody({ block, onChange, exhibit, tone, template, sensitivity }: { 
             <div className="flex items-start gap-2">
               <InlineInput value={block.title} onChange={(title) => onChange({ ...block, title })} placeholder="Argument title" className="flex-1 text-[13.5px] font-semibold text-heading" />
               {template !== "boardroom" && label ? (
-                <span className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[9.5px] font-bold ${kind === "s" ? "bg-green-tint text-primary" : "bg-[#FBF3E4] text-amber"}`}>{label}</span>
+                <span className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[9.5px] font-bold ${kind === "s" ? "bg-teal-tint text-primary" : "bg-[#FBF3E4] text-amber"}`}>{label}</span>
               ) : null}
             </div>
             <AutoText value={block.text} onChange={(text) => onChange({ ...block, text })} placeholder="Evidence and implication" className="text-[13px] leading-[1.6]" />

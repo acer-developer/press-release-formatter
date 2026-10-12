@@ -53,7 +53,7 @@ export const Pill = ({ text, tone, filled }: { text: string; tone: "good" | "war
         style={{
           borderWidth: filled ? 0 : 0.8,
           borderColor: c,
-          backgroundColor: filled ? (tone === "warn" ? brand.amberTint : brand.greenTint) : undefined,
+          backgroundColor: filled ? (tone === "warn" ? brand.amberTint : brand.tealTint) : undefined,
           borderRadius: 9,
           paddingVertical: 1.6,
           paddingHorizontal: 6,

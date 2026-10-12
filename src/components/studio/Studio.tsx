@@ -31,7 +31,6 @@ import { loadPdfJs } from "@/lib/pdfjs-client";
 import { loadAiSettings, saveAiSettings } from "@/lib/settings";
 import { saveNote } from "@/lib/store";
 import { TEMPLATES } from "@/lib/pdf/templates/templates";
-import { PALETTE_LABELS } from "@/lib/pdf-themes/acer";
 import { northwindSample } from "@/lib/note/samples/northwind";
 import { emptyNote, type Issue, type RatingNote } from "@/lib/note/schema";
 import { verifyNote } from "@/lib/verify/verify";
@@ -187,8 +186,8 @@ export function Studio() {
         ai,
         pdfjs: await loadPdfJs(),
       });
-      // Presentation choices made before generating (charts, date, template, colour) carry over to the new note.
-      replaceNote({ ...result.note, options: { charts: note.options?.charts ?? false, dateMode: note.options?.dateMode ?? "date", template: note.options?.template ?? "boardroom", palette: note.options?.palette ?? "green" } });
+      // Presentation choices made before generating (charts, date, template) carry over to the new note.
+      replaceNote({ ...result.note, options: { charts: note.options?.charts ?? false, dateMode: note.options?.dateMode ?? "date", template: note.options?.template ?? "boardroom" } });
       setSourceText(result.sourceText);
       setServerIssues(result.issues);
       setEngineUsed(result.engine);
@@ -259,7 +258,7 @@ export function Studio() {
   const charts = !!note.options?.charts;
 
   return (
-    <div className="flex h-screen flex-col" data-palette={note.options?.palette ?? "green"}>
+    <div className="flex h-screen flex-col">
       {/* Top bar */}
       <header className="relative z-30 flex h-14 shrink-0 items-center gap-3 border-b border-hairline bg-white px-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -291,20 +290,6 @@ export function Studio() {
                 className={`h-full rounded px-2.5 text-[12px] font-semibold ${(note.options?.template ?? "boardroom") === t.id ? "bg-deep text-white" : "text-muted hover:text-heading"}`}
               >
                 {t.letter} <span className="font-medium">{t.name}</span>
-              </button>
-            ))}
-          </div>
-          <div className="inline-flex h-8 items-center rounded-md border border-hairline p-0.5" role="group" aria-label="Colour">
-            {PALETTE_LABELS.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                title={`${p.name} colour scheme`}
-                onClick={() => mutate((d) => void (d.options = { ...d.options, palette: p.id }))}
-                className={`inline-flex h-full items-center gap-1.5 rounded px-2 text-[12px] font-semibold ${(note.options?.palette ?? "green") === p.id ? "bg-mist text-heading" : "text-muted hover:text-heading"}`}
-              >
-                <span className="h-3 w-3 rounded-full ring-1 ring-black/10" style={{ background: p.swatch }} />
-                {p.name}
               </button>
             ))}
           </div>

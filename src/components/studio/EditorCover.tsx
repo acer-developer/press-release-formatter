@@ -114,7 +114,7 @@ function BoardroomCover({ note, mutate, b }: { note: RatingNote; mutate: Mutate;
         </div>
       </div>
       <div className="bg-deep px-14 pt-7">
-        <div className="text-[9.5px] font-bold uppercase tracking-[0.2em] text-lime">Credit rating action</div>
+        <div className="text-[9.5px] font-bold uppercase tracking-[0.2em] text-banner-label">Credit rating action</div>
         <Company note={note} mutate={mutate} className="mt-2 font-serif text-[36px] font-bold leading-tight !text-white placeholder:!text-white/40" />
         <Headline note={note} mutate={mutate} className="mt-1 max-w-[560px] text-[15px] leading-snug !text-banner-text placeholder:!text-white/40" />
         <div className="mt-6 grid grid-cols-4 border-t border-banner-rule" title="Derived from the headline and instruments table">
@@ -258,7 +258,7 @@ function ReportCover({ note, mutate, b }: { note: RatingNote; mutate: Mutate; b:
       <Headline note={note} mutate={mutate} className="mt-1 text-[15px] leading-snug text-muted" />
       <div className="mt-3 flex flex-wrap gap-2">
         {b.facts.rating ? (
-          <span className="rounded-full bg-green-tint px-3 py-1 text-[11px] font-bold text-primary">
+          <span className="rounded-full bg-teal-tint px-3 py-1 text-[11px] font-bold text-primary">
             Rating: {b.facts.rating}
             {b.facts.outlook ? ` (${b.facts.outlook})` : ""}
           </span>

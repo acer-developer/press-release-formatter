@@ -59,7 +59,7 @@ function fromLlm(llm: LlmNote): RatingNote {
       .filter((s) => s.blocks.length),
     contacts: llm.contacts.filter((c) => c.name),
     disclaimer: llm.disclaimer || DEFAULT_DISCLAIMER,
-    options: { charts: false, dateMode: "date", template: "boardroom", palette: "green" },
+    options: { charts: false, dateMode: "date", template: "boardroom" },
   };
 }
 

@@ -9,34 +9,19 @@
   --color-heading: #111111;
   --color-muted: #5f6368;
   --color-hairline: #daddd8;
-  --color-mist: #f4f7f5;
-  --color-tint: #eef8f5;
-  --color-deep: #22493e;
-  --color-primary: #326d5e;
-  --color-accent: #43927d;
-  --color-light: #54b69c;
-  --color-lime: #8ec641;
-  --color-amber: #9a6a16;
-  --color-green-tint: #e7f4ee;
-  --color-banner-rule: #4f7a6e;
-  --color-banner-label: #9fc7ba;
-  --color-banner-text: #d6e6e0;
-}
-
-/* Colour scheme switch: the same tokens, ACER teal family. Fills behind white text use #23807C. */
-[data-palette="teal"] {
+  --color-mist: #f4f7f7;
+  --color-tint: #eaf7f7;
   --color-deep: #23807c;
   --color-primary: #2a8f8b;
   --color-accent: #3aa4a9;
   --color-light: #3aafa9;
-  --color-tint: #eaf7f7;
-  --color-green-tint: #e2f4f3;
+  --color-amber: #9a6a16;
+  --color-teal-tint: #e2f4f3;
   --color-banner-rule: #5ea9a6;
   --color-banner-label: #c3e8e5;
   --color-banner-text: #e4f5f4;
-  --brand-gradient: linear-gradient(90deg, #8ec641 0%, #3aafa9 55%, #3aa4a9 100%);
-  --brand-gradient-v: linear-gradient(180deg, #8ec641 0%, #3aafa9 55%, #3aa4a9 100%);
 }
+
 
 html, body { height: 100%; }
 body {
@@ -46,14 +31,14 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-.brand-gradient { background: var(--brand-gradient, linear-gradient(90deg, #8ec641 0%, #54b69c 60%, #43927d 100%)); }
-.brand-gradient-v { background: var(--brand-gradient-v, linear-gradient(180deg, #8ec641 0%, #54b69c 60%, #43927d 100%)); }
-.paper { box-shadow: 0 1px 2px rgba(17, 24, 20, 0.06), 0 12px 40px -12px rgba(17, 24, 20, 0.18); }
+.brand-gradient { background: linear-gradient(90deg, #3aafa9 0%, #3aa4a9 55%, #23807c 100%); }
+.brand-gradient-v { background: linear-gradient(180deg, #3aafa9 0%, #3aa4a9 55%, #23807c 100%); }
+.paper { box-shadow: 0 1px 2px rgba(14, 40, 40, 0.06), 0 12px 40px -12px rgba(14, 40, 40, 0.18); }
 
 /* Inline editing: fields look like print until hovered or focused. */
 .edit-field { border-radius: 3px; outline: none; transition: background-color 120ms, box-shadow 120ms; resize: none; background: transparent; width: 100%; }
-.edit-field:hover { background: rgba(67, 146, 125, 0.07); }
-.edit-field:focus { background: rgba(67, 146, 125, 0.09); box-shadow: 0 0 0 1px rgba(67, 146, 125, 0.55); }
+.edit-field:hover { background: rgba(58, 164, 169, 0.07); }
+.edit-field:focus { background: rgba(58, 164, 169, 0.09); box-shadow: 0 0 0 1px rgba(58, 164, 169, 0.55); }
 .edit-field::placeholder { color: #a3a8a2; font-style: italic; }
 
 .block-toolbar { opacity: 0; transition: opacity 120ms; }
