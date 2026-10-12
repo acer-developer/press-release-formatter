@@ -1,6 +1,6 @@
 # Architecture
 
-Rating Note Studio turns one source (an uploaded document or pasted text) into an ACER credit rating press release, lets an analyst edit it on the page, checks every figure against the source, and exports a branded A4 PDF in one of three templates. Everything runs in the browser; the site is a static Next.js export on GitHub Pages.
+Rating Note Generator turns one source (an uploaded document or pasted text) into an ACER credit rating press release, lets an analyst edit it on the page, checks every figure against the source, and exports a branded A4 PDF in one of three templates. Everything runs in the browser; the site is a static Next.js export on GitHub Pages.
 
 ## Design principles
 

@@ -1,4 +1,4 @@
-# Rating Note Studio
+# Rating Note Generator
 
 Turns an existing rating document or raw analyst notes into a publication-ready ACER credit rating press release. You edit the note on a page that looks like the output, choose one of three layouts, and export a branded A4 PDF. Every figure and rating is checked against the source, so nothing is published that the source does not say.
 
