@@ -249,7 +249,7 @@ export function Studio() {
         <img src={asset("/acer-logo.png")} alt="ACER" className="h-7 w-auto" />
         <div className="h-6 w-px bg-hairline" />
         <div className="min-w-0">
-          <div className="text-[13px] font-bold text-heading">Rating Note Generator</div>
+          <div className="text-[13px] font-bold text-heading">Press Release Formatter</div>
           <div className="truncate text-[11px] text-muted">
             {note.meta.companyName || "Untitled note"}
             {version ? `  |  v${version}` : ""}

@@ -108,7 +108,7 @@ function BoardroomCover({ note, mutate, b }: { note: RatingNote; mutate: Mutate;
     <div className="-mx-14 -mt-8 mb-6">
       <div className="flex items-center justify-between px-14 py-5">
         <Logo />
-        <div className="flex items-start gap-3">
+        <div className="flex flex-col items-end gap-1">
           <InlineInput value={note.meta.documentType} onChange={(v) => mutate((d) => void (d.meta.documentType = v))} className="w-28 text-right text-[9.5px] font-bold uppercase tracking-[0.2em] text-muted" ariaLabel="Document type" />
           <DateControl note={note} mutate={mutate} />
         </div>

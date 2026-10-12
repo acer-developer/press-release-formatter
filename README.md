@@ -1,8 +1,8 @@
-# Rating Note Generator
+# Press Release Formatter
 
 Turns an existing rating document or raw analyst notes into a publication-ready ACER credit rating press release. You edit the note on a page that looks like the output, choose one of three layouts, and export a branded A4 PDF. Every figure and rating is checked against the source, so nothing is published that the source does not say.
 
-**Live site:** https://acer-developer.github.io/ratingnote-generator-/
+**Live site:** https://acer-developer.github.io/press-release-formatter/
 
 Everything runs in the browser. Documents are not uploaded to any server, notes are saved in your browser, and AI is optional.
 

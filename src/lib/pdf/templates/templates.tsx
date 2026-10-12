@@ -130,7 +130,10 @@ function BoardroomPages({ note, assets }: { note: RatingNote; assets: TemplateAs
       <Page size="A4" margin={0} style={{ fontFamily: F.body, color: brand.ink }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: MARGIN_X, paddingVertical: 16 }}>
           {assets.logo ? <Image src={assets.logo} style={{ width: 96 }} /> : <Text style={{ ...serif, fontSize: 18 }}>ACER</Text>}
-          <Text style={{ ...caps, color: brand.slate }}>{`${note.meta.documentType || "Press Release"}${showsDate(note) ? `  |  ${note.meta.date}` : ""}`}</Text>
+          <View style={{ alignItems: "flex-end" }}>
+            <Text style={{ ...caps, color: brand.slate }}>{note.meta.documentType || "Press Release"}</Text>
+            {showsDate(note) ? <Text style={{ fontFamily: F.body, fontSize: 8, color: brand.slate, marginTop: 4 }}>{note.meta.date}</Text> : null}
+          </View>
         </View>
         <View style={{ backgroundColor: brand.deep, paddingHorizontal: MARGIN_X, paddingTop: 26 }}>
           <Text style={{ ...caps, color: brand.bannerLabel, marginBottom: 10 }}>Credit rating action</Text>

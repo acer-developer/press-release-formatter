@@ -20,7 +20,7 @@ const caladea = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Rating Note Generator | ACER",
+  title: "Press Release Formatter | ACER",
   description: "Generate publication-ready ACER credit rating press releases from raw notes or existing documents.",
 };
 
