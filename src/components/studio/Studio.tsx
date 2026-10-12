@@ -211,7 +211,7 @@ export function Studio() {
       const blob = new Blob([pdf as BlobPart], { type: "application/pdf" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = `${(note.meta.companyName || "rating-note").replace(/[^\w]+/g, "-")}-press-release.pdf`;
+      a.download = `${(note.meta.companyName || "ACER").replace(/[^\w]+/g, "-")}-press-release.pdf`;
       a.click();
       // Some browsers start the download asynchronously; revoking at once can cancel it.
       setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
@@ -226,7 +226,7 @@ export function Studio() {
     const blob = new Blob([JSON.stringify(note, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `${(note.meta.companyName || "rating-note").replace(/[^\w]+/g, "-")}.json`;
+    a.download = `${(note.meta.companyName || "ACER").replace(/[^\w]+/g, "-")}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
   }

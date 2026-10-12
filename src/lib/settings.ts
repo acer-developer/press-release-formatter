@@ -1,6 +1,6 @@
 import { emptyAiSettings, type AiSettings } from "@/lib/ai/providers";
 
-const KEY = "rating-note-studio:ai-settings";
+const KEY = "press-release-formatter:ai-settings";
 
 /** AI keys are stored only in this browser (localStorage) and sent only to the chosen provider. */
 export function loadAiSettings(): AiSettings {

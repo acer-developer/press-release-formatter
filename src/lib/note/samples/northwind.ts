@@ -100,7 +100,7 @@ export const northwindSample: RatingNote = {
         {
           id: "b14",
           type: "paragraph",
-          text: "Northwind Renewables Limited is a fictional independent power producer used to demonstrate this note generator. It operates 410 MW of wind and solar capacity across three states.",
+          text: "Northwind Renewables Limited is a fictional independent power producer used to demonstrate this press release formatter. It operates 410 MW of wind and solar capacity across three states.",
         },
       ],
     },

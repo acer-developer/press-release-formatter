@@ -40,5 +40,10 @@
     "typescript": "^5",
     "vitest": "^5.0.3"
   },
-  "type": "module"
+  "type": "module",
+  "overrides": {
+    "next": {
+      "postcss": "^8.5.29"
+    }
+  }
 }

@@ -24,7 +24,7 @@ export interface StoredNote {
   versions: NoteVersion[];
 }
 
-const store = typeof indexedDB !== "undefined" ? createStore("rating-note-studio", "notes") : undefined;
+const store = typeof indexedDB !== "undefined" ? createStore("press-release-formatter", "notes") : undefined;
 
 const newId = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 

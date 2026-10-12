@@ -4,6 +4,8 @@ Turns an existing rating document or raw analyst notes into a publication-ready 
 
 **Live site:** https://acer-developer.github.io/press-release-formatter/
 
+**User guide:** https://acer-developer.github.io/press-release-formatter/sop/
+
 Everything runs in the browser. Documents are not uploaded to any server, notes are saved in your browser, and AI is optional.
 
 ## How to use it
